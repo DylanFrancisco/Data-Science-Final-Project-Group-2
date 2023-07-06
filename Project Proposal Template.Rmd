@@ -26,10 +26,10 @@ library(tidyverse)
 
 - **Question 1:** What is the relationship between between the number of services received (both outpatient and inpatient) and the average estimate for charges covered by Medicare.
 - **Question 2:** Does Medicare tend to provide more funding towards patients needing outpatient or inpatient care?
-- **Question 3:**
-- **Question 4:**
-- **Question 5:**
-- **Question 6:**
+- **Question 3:** What is the relationship between the state in which nursing facilities are found and the average length of stay, in days, for all Medicare beneficiaries with at least one stay in the nursing facility?
+- **Question 4:** What is the relationship between the provider specialty and number of medicare beneficiaries in terms of drug prescription? (Which type of providers have a higher vs. lower amount of drug prescriptions? Does state matter?)
+- **Question 5:** In which cities is the average charge for medicare the highest among other cities in the tables? Do these cities have a high cost of living over other states
+- **Question 6:** Concerning Nursing home data, which has a more direct relationship with price, the length of stay or the total number of skilled nursing facility stays? Why?
 - **Question 7:**
 - **Question 8:**
 - **Question 9:**
