@@ -75,9 +75,11 @@ ggplot(hhadata2015, aes(x=HHRG, y = Average.HHA.Medicare.Payment.Amount)) +
 ### Q1: Does increase in the percentage of beneficiaries with a Cancer and Atrial Fibrillation increase the average hha medicare payment amount?
 
 ```{r}
-hha_2015 %>% rename( "distinct"="Distinct.Beneficiaries..non.LUPA.") %>% mutate(actual_with_cancer =Percent.of.Beneficiaries.with.Cancer * .01 * distinct) %>%ggplot() + geom_point(aes(x = actual_with_cancer, y=Total.HHA.Charge.Amount..non.LUPA.))
+hha_2015 %>% rename( "distinct"="Distinct.Beneficiaries..non.LUPA.") %>% mutate(actual_with_cancer =Percent.of.Beneficiaries.with.Cancer * .01 * distinct) %>%ggplot() + geom_point(aes(x = actual_with_cancer, y=Total.HHA.Charge.Amount..non.LUPA.)) +
+  labs(x = "Number People with Cancer", y = "Total HHA Charge Non-LUPA")
 
-hha_2015 %>% rename( "distinct"="Distinct.Beneficiaries..non.LUPA.") %>% mutate(actual_with_Atrial.Fibrillation =Percent.of.Beneficiaries.with.Atrial.Fibrillation * .01 * distinct) %>%ggplot() + geom_point(aes(x = actual_with_Atrial.Fibrillation, y=Total.HHA.Charge.Amount..non.LUPA.))
+hha_2015 %>% rename( "distinct"="Distinct.Beneficiaries..non.LUPA.") %>% mutate(actual_with_Atrial.Fibrillation =Percent.of.Beneficiaries.with.Atrial.Fibrillation * .01 * distinct) %>%ggplot() + geom_point(aes(x = actual_with_Atrial.Fibrillation, y=Total.HHA.Charge.Amount..non.LUPA.))+
+  labs(x = "Number People with Atrial Fibrillation", y = "Total HHA Charge Non-LUPA")
 
 ```
 
@@ -140,7 +142,8 @@ hha_allyear<- hha_2015_q2 %>% inner_join(hha_2014_q2, "Provider.ID") %>% inner_j
 hha_allyear_graph <- hha_allyear %>% gather(`2015`, `2013`, `2014`, key  = Year, value = HHA_charge, convert = TRUE)
 
 ggplot(hha_allyear_graph) + geom_line(aes(x=Year,y=HHA_charge, group = Provider.ID)) + guides(color=F) +
- scale_x_discrete(breaks=c(2013, 2014, 2015),labels=c(2013, 2014, 2015)) + theme_minimal()
+ scale_x_discrete(breaks=c(2013, 2014, 2015),labels=c(2013, 2014, 2015)) + theme_minimal() +
+  labs(x = "Year (2013-2015)", y = "Total HHA Charge Non-LUPA")
 
 ```
 
@@ -151,7 +154,8 @@ hhaData2015.F2 <- hhadatahhrg2015.untidy %>%
   arrange(desc(Differnece_In_Males_and_Females))
 
 ggplot(hhaData2015.F2, aes(x = Differnece_In_Males_and_Females, y = Total.HHA.Medicare.Payment.Amount..non.LUPA.)) +
-  geom_line()
+  geom_line() +
+  labs(x = "Difference in Males and Females per HHA", y = "HHA Medicare Payment Non-LUPA")
 
 
 ```
