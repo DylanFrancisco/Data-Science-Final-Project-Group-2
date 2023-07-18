@@ -1,0 +1,187 @@
+---
+title: "Exploratory Data Analysis"
+author: "STOR 320.02 Group 2 (Ex: STOR 320.01 Group 12)"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(knitr)
+
+
+setwd("C:/Users/dylan/Documents/GitHub/Data-Science-Final-Project-Group-2")
+hhadata2015.untidy = read.csv("CSVs/medicare-home-health-agency-hha-hhrg-aggregate-report-cy-2015.csv")
+hhadatastates2015.untidy = read.csv("CSVs/medicare-home-health-agency-hha-hhrg-by-state-aggregate-report-cy-2015.csv")
+hhadatahhrg2015.untidy = read.csv("CSVs/medicare-home-health-agency-hha-provider-aggregate-report-cy-2015.csv")
+hha_2015 <- read.csv("CSVs/medicare-home-health-agency-hha-provider-aggregate-report-cy-2015.csv")
+hha_2014 <- read.csv("CSVs/medicare-home-health-agency-hha-provider-aggregate-report-cy-2014.csv")
+hha_2013 <- read.csv("CSVs/medicare-home-health-provider-aggregate-table-cy-2013.csv")
+
+```
+
+# Creator/Deliverier: Dylan Francisco
+
+### Q1: Looking at the Home Health Agency Aggregate report, is there a relationship between the HHRG’s and total payment from Medicare?
+
+```{r}
+hhadata2015 <- hhadata2015.untidy %>% 
+  select("HHRG", "Total.Episodes", "Total.HHA.Medicare.Payment.Amount", "Average.HHA.Medicare.Payment.Amount")
+
+
+ggplot(hhadata2015, aes(x = HHRG, y = Total.HHA.Medicare.Payment.Amount)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(y = "Avergae Medicare Payment") +
+  scale_x_discrete(guide = guide_axis(n.dodge=15)) +
+  theme_minimal()
+```
+
+### Q2: Is there a relationship between the state's locations and the total number of episodes relating to an HHRG?
+
+```{r}
+hhaStateData2015 <- hhadatastates2015.untidy %>% 
+  select("State", "Average.HHA.Charge.Amount", "Total.Episodes" )
+
+ggplot(hhaStateData2015, aes(x = State, y = Total.Episodes)) +
+  geom_point() +
+  labs(y = "Total Episodes per HHRG") +
+  scale_x_discrete(guide = guide_axis(n.dodge=2)) +
+  theme_minimal()
+```
+
+# Interpreter: Daniela Juarez Gonzalez
+
+### Q1: Is there a relationship between the state of the location of the home agency and the average of the charges that the home health agency submitted for non - LUPA episodes?
+
+```{r}
+ggplot(hhaStateData2015, aes(x= State, y = Average.HHA.Charge.Amount)) +
+  geom_boxplot() +
+  scale_x_discrete(guide = guide_axis(n.dodge=2)) +
+  theme_minimal()
+```
+
+### Q2:  How does the HHRG relate to the average amount that medicare paid for non-LUPA episodes adjusted for geographical differences in payment?
+
+```{r}
+ggplot(hhadata2015, aes(x=HHRG, y = Average.HHA.Medicare.Payment.Amount)) +
+  geom_point() +
+  scale_x_discrete(guide = guide_axis(n.dodge=15))
+```
+
+# Orator: Elvis Atitsoabui
+
+### Q1: Does increase in the percentage of beneficiaries with a Cancer and Atrial Fibrillation increase the average hha medicare payment amount?
+
+```{r}
+hha_2015 %>% rename( "distinct"="Distinct.Beneficiaries..non.LUPA.") %>% mutate(actual_with_cancer =Percent.of.Beneficiaries.with.Cancer * .01 * distinct) %>%ggplot() + geom_point(aes(x = actual_with_cancer, y=Total.HHA.Charge.Amount..non.LUPA.))
+
+hha_2015 %>% rename( "distinct"="Distinct.Beneficiaries..non.LUPA.") %>% mutate(actual_with_Atrial.Fibrillation =Percent.of.Beneficiaries.with.Atrial.Fibrillation * .01 * distinct) %>%ggplot() + geom_point(aes(x = actual_with_Atrial.Fibrillation, y=Total.HHA.Charge.Amount..non.LUPA.))
+
+```
+
+### Q2:  Using the provider ID dataset, do providers that have more females over males by at least 10 tend to recieve more funding from Medicare?
+
+```{r}
+hhaData2015Females <-  hhadatahhrg2015.untidy %>% 
+  select("Provider.ID", "Male.Beneficiaries", "Female.Beneficiaries", "Total.HHA.Medicare.Payment.Amount..non.LUPA." ) %>% 
+  filter(!Male.Beneficiaries>Female.Beneficiaries) %>% 
+  filter(!Female.Beneficiaries - Male.Beneficiaries < 10) %>% 
+  transmute(Females = "Females", Average = mean(Total.HHA.Medicare.Payment.Amount..non.LUPA.))
+
+  
+hhaData2015Males <-  hhadatahhrg2015.untidy %>% 
+  select("Provider.ID", "Male.Beneficiaries", "Female.Beneficiaries", "Total.HHA.Medicare.Payment.Amount..non.LUPA." ) %>% 
+  filter(Male.Beneficiaries>Female.Beneficiaries) %>% 
+  filter(!Male.Beneficiaries - Female.Beneficiaries < 10) %>% 
+  transmute(Males = "Males", Average = mean(Total.HHA.Medicare.Payment.Amount..non.LUPA.))
+
+
+MalesVFemales <- tibble(
+  Sex = c("More Males", "More Females"),
+  Average_Paid_By_Medicare = c("$2,191,278", "$918,996.2")
+
+  
+)
+
+
+MalesVFemaleshtml <- kable(MalesVFemales, format = "html", caption = "Average paid by Medicare for Home Health Agencies based on if more Males or Female Beneficiaries are Present by 10")
+MalesVFemaleshtml
+
+```
+
+
+# Follow-up Questions
+
+### New Questions Based Off Initial Investigation
+
+- Q1: How does the relationship between HHRG and the total number of episodes help explain the difference between the average payment from medicare?
+- Q2: Does a certain HHRG have more prevalence across states or does it differ? What could be the reasoning for certain states to have more of a certain HHRG than others?
+- Q3: What is the trend of total cost of HHA for provider across 2013-2015?
+- Q4: What is the relationship between the difference in number of males and females at specific provider ID and total HHA medicare payment amount?
+### Investigation of Follow-up Questions
+
+GIVE WHAT 2 QUESTIONS YOU ATTEMPTED TO INVESTIGATE FURTHER IN COMPLETE SENTENCES (*Example:* Our group decided to investigate Q2 and Q4 in further detail.)
+
+### Our group attempted to further investigate Q3 and Q4.
+
+SHOW AT LEAST 2 TABLES OR FIGURES BELOW THAT EXPLORE ANSWERS FOR THE QUESTIONS YOU ARE INVESTIGATING FURTHER.
+
+```{r}
+hha_2015_q2 <- hha_2015 %>% select( (1:5), (16:19), 37)
+
+hha_2014_q2 <- hha_2014%>% select( (1:5), (16:19), 37) %>% rename("Total.HHA.Charge.Amount..non.LUPA_2014" = "Total.HHA.Charge.Amount..non.LUPA.") %>% select(Provider.ID, Total.HHA.Charge.Amount..non.LUPA_2014)
+
+hha_2013_q2 <- hha_2013%>% select( (1:5), (16:19), 37) %>% rename("Total.HHA.Charge.Amount..non.LUPA_2013" = "Total.HHA.Charge.Amount..non.LUPA.") %>% select(Provider.ID, Total.HHA.Charge.Amount..non.LUPA_2013)
+ 
+hha_allyear<- hha_2015_q2 %>% inner_join(hha_2014_q2, "Provider.ID") %>% inner_join(hha_2013_q2, "Provider.ID") %>% select((1:6), (11:12)) %>% rename("2015" = "Total.HHA.Charge.Amount..non.LUPA.", "2014" = "Total.HHA.Charge.Amount..non.LUPA_2014", "2013" = "Total.HHA.Charge.Amount..non.LUPA_2013")
+
+hha_allyear_graph <- hha_allyear %>% gather(`2015`, `2013`, `2014`, key  = Year, value = HHA_charge, convert = TRUE)
+
+ggplot(hha_allyear_graph) + geom_line(aes(x=Year,y=HHA_charge, group = Provider.ID)) + guides(color=F) +
+ scale_x_discrete(breaks=c(2013, 2014, 2015),labels=c(2013, 2014, 2015)) + theme_minimal()
+
+```
+
+```{r}
+hhaData2015.F2 <- hhadatahhrg2015.untidy %>% 
+  select("Agency.Name", "Total.HHA.Medicare.Payment.Amount..non.LUPA.", "Female.Beneficiaries", "Male.Beneficiaries") %>% 
+  mutate(Differnece_In_Males_and_Females = Male.Beneficiaries - Female.Beneficiaries) %>% 
+  arrange(desc(Differnece_In_Males_and_Females))
+
+ggplot(hhaData2015.F2, aes(x = Differnece_In_Males_and_Females, y = Total.HHA.Medicare.Payment.Amount..non.LUPA.)) +
+  geom_line()
+
+
+```
+
+# Summary
+
+GIVE A 2 PARAGRAPH SUMMARY. 
+
+PARAGRAPH 1 SHOULD DESCRIBE WHAT YOU LEARNED ABOUT YOUR DATA FROM INVESTIGATING THE INITIAL QUESTIONS. DID YOU FIND ANYTHING UNUSUAL IN YOUR DATA? DID ANYTHING SURPRISE YOU? WHICH OF THE INITIAL QUESTIONS WERE HELPFUL IN LEADING YOU TO MORE QUESTIONS?
+
+While exploring data we found and made many different observations about our dataset. One of the first main discoveries was the differences between the various csv files that were included in our dataset. For example, while the datasets may look similar, there are special sets grouped by various variables such as state, provider id, HHRG, and more. We were able to use a variety of these datasets to create our tables and figures for our initial questions. These also helped us create new, more complex follow-up questions that were based on more specific details from the datasets. The dataset that was grouped by state was especially helpful in creating follow-up questions as it allowed us to observe certain variables depending on the state. Exploring the data also made it more clear what a HHRG was, explaining that the reason HHRG's with a higher leading number tend to cost more money to treat, since the leading number is based on the number of visits that HHRG has needed.We also noticed that the states all seemed to have a similar average for how much the HHA was charging.
+
+
+PARAGRAPH 2 SHOULD SUMMARIZE WHAT YOU LEARNED FROM INVESTIGATING THE FOLLOW-UP QUESTIONS. WHY ARE THESE FOLLOW-UP QUESTIONS INTERESTING FOR INVESTIGATION? DESCRIBE THE TABLES/FIGURES YOU USED TO EXPLORE ANSWERS TO THESE FOLLOW-UP QUESTIONS? WHAT DID YOU LEARN FROM THE TABLES/FIGURES REGARDING THE FOLLOW-UP QUESTIONS YOU PROPOSED?
+
+
+We learned a lot from investigating our follow-up questions regarding our datasets. When looking into our first follow-up question, thinking about a plot that would show all of the data we had was a hard question. When thinking about 2-D plots, it was difficult to find one that would fit all of the observations we had. We think this question is interesting because we can show the trend throughout years on how pricing has changed for HHA's. Our second question was also difficult because of the way the dataset divided the male and female categories. Since the dataset was grouped by the Provider ID, the variables for male beneficiaries and female beneficiaries did not tell us specifically how much of the total charge went to each sex. We thought to use the difference, where a positive number represents that many more males at a HHA and a negative number represents that many more females. We used a line graph to show how the difference in sex at each provider was related to the total medicare payment.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
