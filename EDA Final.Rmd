@@ -33,7 +33,7 @@ hhadata2015 <- hhadata2015.untidy %>%
 ggplot(hhadata2015, aes(x = HHRG, y = Total.HHA.Medicare.Payment.Amount)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
-  labs(y = "Avergae Medicare Payment") +
+  labs(y = "Average Medicare Payment") +
   scale_x_discrete(guide = guide_axis(n.dodge=15)) +
   theme_minimal()
 ```
