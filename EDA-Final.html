@@ -413,9 +413,9 @@ payment?</h3>
 </div>
 <div id="orator-elvis-atitsoabui" class="section level1">
 <h1>Orator: Elvis Atitsoabui</h1>
-<div id="q1-does-increase-in-the-percentage-of-beneficiaries-with-a-cancer-and-atrial-fibrillation-increase-the-average-hha-medicare-payment-amount" class="section level3">
-<h3>Q1: Does increase in the percentage of beneficiaries with a Cancer
-and Atrial Fibrillation increase the average hha medicare payment
+<div id="q1-does-an-increase-in-the-number-of-beneficiaries-with-cancer-or-atrial-fibrillation-increase-the-average-hha-medicare-payment-amount" class="section level3">
+<h3>Q1: Does an increase in the number of beneficiaries with Cancer or
+Atrial Fibrillation increase the average hha medicare payment
 amount?</h3>
 <pre class="r"><code>hha_2015 %&gt;% rename( &quot;distinct&quot;=&quot;Distinct.Beneficiaries..non.LUPA.&quot;) %&gt;% mutate(actual_with_cancer =Percent.of.Beneficiaries.with.Cancer * .01 * distinct) %&gt;%ggplot() + geom_point(aes(x = actual_with_cancer, y=Total.HHA.Charge.Amount..non.LUPA.)) +
   labs(x = &quot;Number People with Cancer&quot;, y = &quot;Total HHA Charge Non-LUPA&quot;)</code></pre>
@@ -444,7 +444,7 @@ hhaData2015Males &lt;-  hhadatahhrg2015.untidy %&gt;%
 
 MalesVFemales &lt;- tibble(
   Sex = c(&quot;More Males&quot;, &quot;More Females&quot;),
-  Average_Paid_By_Medicare = c(&quot;$2,191,278&quot;, &quot;$918,996.2&quot;)
+  Average_Paid_By_Medicare = c(&quot;$918,996.2&quot;, &quot;$2,191,278&quot;)
 
   
 )
@@ -473,7 +473,7 @@ Average_Paid_By_Medicare
 More Males
 </td>
 <td style="text-align:left;">
-$2,191,278
+$918,996.2
 </td>
 </tr>
 <tr>
@@ -481,7 +481,7 @@ $2,191,278
 More Females
 </td>
 <td style="text-align:left;">
-$918,996.2
+$2,191,278
 </td>
 </tr>
 </tbody>
