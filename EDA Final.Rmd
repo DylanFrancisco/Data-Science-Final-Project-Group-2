@@ -179,6 +179,7 @@ We learned a lot from investigating our follow-up questions regarding our datase
 
 
 ```{r}
+#Seperating the HHRG Description into new variables
 hhadata2015.seperated <- hhadata2015.untidy %>%
   separate(col = HHRG.Description, into = c("HHRG.Description", "Therapies", "Clinical_Severity_Level", "Functional_Severity_Level", "Service_Severity_Level"),
            sep = ",", remove = FALSE, extra = "drop") 
@@ -189,7 +190,10 @@ hhadata2015.seperated$Service_Severity_Level <- as.numeric(gsub("\\D", "", hhada
 
 hhadata2015.seperated <- hhadata2015.seperated %>% 
   select("HHRG", "HHRG.Description", "Clinical_Severity_Level", "Functional_Severity_Level", "Service_Severity_Level", "Distinct.Beneficiaries", "Total.HHA.Medicare.Payment.Amount", "Average.HHA.Medicare.Payment.Amount") 
+```
 
+```{r}
+#creating summaries of the different serverity levels
 average_amt_by_service_severity <- hhadata2015.seperated %>%
   group_by(Service_Severity_Level) %>%
   summarize(Average_Amount_Provided_by_Medicare = sum(Total.HHA.Medicare.Payment.Amount) / sum(Distinct.Beneficiaries))
@@ -204,7 +208,10 @@ average_amt_by_clincical_severity
 average_amt_by_functional_severity
 average_amt_by_service_severity
 
-set.seed(123)  # For reproducibility
+```
+
+```{r}
+set.seed(123)  
 split <- sample.split(hhadata2015.seperated$Total.HHA.Medicare.Payment.Amount, SplitRatio = 0.8)
 train_data <- filter(hhadata2015.seperated, split == TRUE)
 test_data <- filter(hhadata2015.seperated, split == FALSE)
@@ -222,6 +229,12 @@ rmse <- sqrt(mse)
 # View the performance metrics
 print(paste("Root Mean Squared Error (RMSE):", rmse))
 
+```
+
+```{r}
+
+#Creating residual plots for the different types of severity
+
 test_data$residuals <- test_data$Average.HHA.Medicare.Payment.Amount - predictions
 
 plot_data1 <- ggplot(test_data, aes(x = Service_Severity_Level, y = residuals)) +
@@ -230,23 +243,25 @@ plot_data1 <- ggplot(test_data, aes(x = Service_Severity_Level, y = residuals)) 
   labs(x = "Service Severity Level", y = "Residuals") +
   ggtitle("Linear Model Residuals") +
   theme_minimal()
-plot_data1
+
 plot_data2 <- ggplot(test_data, aes(x = Functional_Severity_Level, y = residuals)) +
   geom_point() +
   geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   labs(x = "Functional Severity Level", y = "Residuals") +
   ggtitle("Linear Model Residuals") +
   theme_minimal()
-plot_data2
+
 plot_data3 <- ggplot(test_data, aes(x = Clinical_Severity_Level, y = residuals)) +
   geom_point() +
   geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   labs(x = "Clinical Severity Level", y = "Residuals") +
   ggtitle("Linear Model Residuals") +
   theme_minimal()
-plot_data3
 
+```
 
+```{r}
+#Combining into one plot
 combined_data <- bind_rows(
   data.frame(variable = "Service_Severity_Level", test_data),
   data.frame(variable = "Functional_Severity_Level", test_data),
@@ -265,9 +280,7 @@ ggplot(test_data, aes(x = as.numeric(Service_Severity_Level), y = residuals, col
   geom_point(data = test_data, aes(x = as.numeric(Clinical_Severity_Level), y = residuals, color = "Clinical_Severity_Level")) +
   scale_color_manual(name = "Severity Levels", values = c("Service_Severity_Level" = "blue", "Functional_Severity_Level" = "green", "Clinical_Severity_Level" = "orange"))
 
-#plot_data <- plot_data + facet_wrap(~Clinical_Severity_Level, ncol = 1)
+
   
 ```
-
-
 
