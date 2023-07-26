@@ -177,6 +177,16 @@ PARAGRAPH 2 SHOULD SUMMARIZE WHAT YOU LEARNED FROM INVESTIGATING THE FOLLOW-UP Q
 We learned a lot from investigating our follow-up questions regarding our datasets. When looking into our first follow-up question, thinking about a plot that would show all of the data we had was a hard question. When thinking about 2-D plots, it was difficult to find one that would fit all of the observations we had. We think this question is interesting because we can show the trend throughout years on how pricing has changed for HHA's. Our second question was also difficult because of the way the dataset divided the male and female categories. Since the dataset was grouped by the Provider ID, the variables for male beneficiaries and female beneficiaries did not tell us specifically how much of the total charge went to each sex. We thought to use the difference, where a positive number represents that many more males at a HHA and a negative number represents that many more females. We used a line graph to show how the difference in sex at each provider was related to the total medicare payment.
 
 
+```{r}
+MAE.func=function(actual,predict){
+  MAE=mean(abs(actual-predict))
+  return(MAE)
+}
+
+```
+
+
+
 
 ```{r}
 #Seperating the HHRG Description into new variables
@@ -185,8 +195,8 @@ hhadata2015.seperated <- hhadata2015.untidy %>%
            sep = ",", remove = FALSE, extra = "drop") 
 hhadata2015.seperated$Clinical_Severity_Level <- as.numeric(gsub("\\D", "", hhadata2015.seperated$Clinical_Severity_Level))
 hhadata2015.seperated$Functional_Severity_Level <- as.numeric(gsub("\\D", "", hhadata2015.seperated$Functional_Severity_Level))
-hhadata2015.seperated$Functional_Severity_Level <- as.numeric(gsub("\\D", "", hhadata2015.seperated$Functional_Severity_Level))
-hhadata2015.seperated$Service_Severity_Level <- as.numeric(gsub("\\D", "", hhadata2015.seperated$Service_Severity_Level))
+hhadata2015.seperated$Service_Severity_Level <- as.numeric(gsub("\\D", "", hhadata2015.seperated$Service_Severity_Level)) 
+  
 
 hhadata2015.seperated <- hhadata2015.seperated %>% 
   select("HHRG", "HHRG.Description", "Clinical_Severity_Level", "Functional_Severity_Level", "Service_Severity_Level", "Distinct.Beneficiaries", "Total.HHA.Medicare.Payment.Amount", "Average.HHA.Medicare.Payment.Amount") 
@@ -210,24 +220,46 @@ average_amt_by_service_severity
 
 ```
 
-```{r}
-set.seed(123)  
-split <- sample.split(hhadata2015.seperated$Total.HHA.Medicare.Payment.Amount, SplitRatio = 0.8)
-train_data <- filter(hhadata2015.seperated, split == TRUE)
-test_data <- filter(hhadata2015.seperated, split == FALSE)
+```{r, warning = F}
+set.seed(112)  
 
-# Create a linear model
-lm_model <- lm(Average.HHA.Medicare.Payment.Amount ~ Service_Severity_Level + Functional_Severity_Level + Clinical_Severity_Level, data = train_data)
+rmse_values_severities <- c()
+rmse_values_empty <- c()
 
-# Make predictions on the test set
-predictions <- predict(lm_model, newdata = test_data)
 
-# Calculate the model performance metrics (
-mse <- mean((test_data$Average.HHA.Medicare.Payment.Amount - predictions)^2)
-rmse <- sqrt(mse)
+#Loop that removes each row, does the lm and predictions for the different models
 
-# View the performance metrics
-print(paste("Root Mean Squared Error (RMSE):", rmse))
+for (i in 1:nrow(hhadata2015.seperated)) {
+  #Model using the 3 different severities 
+  row_removed <- hhadata2015.seperated[-i, ]
+  
+  lm_model_serverties <- lm(Average.HHA.Medicare.Payment.Amount ~ Service_Severity_Level + 
+                            Functional_Severity_Level + Clinical_Severity_Level,
+                            data =  row_removed)
+  prediction_severities <- predict(lm_model_serverties, newdata = hhadata2015.seperated[i, ])
+  rmse_severities <- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_severities)^2)
+  rmse_values_severities <- c(rmse_values_severities, rmse_severities)
+  hhadata2015.seperated$RMSE_Severities[i] <- rmse_severities
+  hhadata2015.seperated$prediction_severities[i] <- prediction_severities
+  
+  
+  #Empty model
+  lm_model_empty <- lm(x ~ y, data = row_removed)
+  prediction_empty <- predict(lm_model_empty, newdata = hhadata2015.seperated[i, ])
+  rmse_empty <-  ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_empty)^2)
+  rmse_values_empty <- c(rmse_values_empty, rmse_empty)
+  hhadata2015.seperated$RMSE_Empty[i] <- rmse_empty
+  hhadata2015.seperated$prediction_empty[i] <- prediction_empty 
+  
+}
+
+average_rmse_severities <- sqrt(mean(rmse_values_severities))
+average_rmse_empty <- sqrt(mean(rmse_values_empty))
+
+print(paste("Average Root Mean Squared Error (RMSE) for Empty Model from Cross-Validation:", average_rmse_empty))
+print(paste("Average Root Mean Squared Error (RMSE) for Severities Model from Cross-Validation:", average_rmse_severities))
+
+
 
 ```
 
@@ -235,23 +267,23 @@ print(paste("Root Mean Squared Error (RMSE):", rmse))
 
 #Creating residual plots for the different types of severity
 
-test_data$residuals <- test_data$Average.HHA.Medicare.Payment.Amount - predictions
+hhadata2015.seperated$residuals <- hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount - hhadata2015.seperated$Predictions
 
-plot_data1 <- ggplot(test_data, aes(x = Service_Severity_Level, y = residuals)) +
+plot_data1 <- ggplot(hhadata2015.seperated, aes(x = Service_Severity_Level, y = residuals)) +
   geom_point() +
   geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   labs(x = "Service Severity Level", y = "Residuals") +
   ggtitle("Linear Model Residuals") +
   theme_minimal()
 
-plot_data2 <- ggplot(test_data, aes(x = Functional_Severity_Level, y = residuals)) +
+plot_data2 <- ggplot(hhadata2015.seperated, aes(x = Functional_Severity_Level, y = residuals)) +
   geom_point() +
   geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   labs(x = "Functional Severity Level", y = "Residuals") +
   ggtitle("Linear Model Residuals") +
   theme_minimal()
 
-plot_data3 <- ggplot(test_data, aes(x = Clinical_Severity_Level, y = residuals)) +
+plot_data3 <- ggplot(hhadata2015.seperated, aes(x = Clinical_Severity_Level, y = residuals)) +
   geom_point() +
   geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   labs(x = "Clinical Severity Level", y = "Residuals") +
@@ -260,24 +292,30 @@ plot_data3 <- ggplot(test_data, aes(x = Clinical_Severity_Level, y = residuals))
 
 ```
 
+
+
+
+
+
+
 ```{r}
 #Combining into one plot
 combined_data <- bind_rows(
-  data.frame(variable = "Service_Severity_Level", test_data),
-  data.frame(variable = "Functional_Severity_Level", test_data),
-  data.frame(variable = "Clinical_Severity_Level", test_data)
+  data.frame(variable = "Service_Severity_Level", hhadata2015.seperated),
+  data.frame(variable = "Functional_Severity_Level", hhadata2015.seperated),
+  data.frame(variable = "Clinical_Severity_Level", hhadata2015.seperated)
 )
 
 # Create the overlapped plot
-ggplot(test_data, aes(x = as.numeric(Service_Severity_Level), y = residuals, color = "Service_Severity_Level")) +
+ggplot(hhadata2015.seperated, aes(x = as.numeric(Service_Severity_Level), y = residuals, color = "Service_Severity_Level")) +
   geom_point() +
   geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   labs(x = "Severity Level", y = "Residuals") +
   ggtitle("Linear Model Residuals") +
   scale_x_continuous(breaks = 1:4, labels = c("Severity 1", "Severity 2", "Severity 3", "Severity 4")) +
   theme_minimal() +
-  geom_point(data = test_data, aes(x = as.numeric(Functional_Severity_Level), y = residuals, color = "Functional_Severity_Level")) +
-  geom_point(data = test_data, aes(x = as.numeric(Clinical_Severity_Level), y = residuals, color = "Clinical_Severity_Level")) +
+  geom_point(data = hhadata2015.seperated, aes(x = as.numeric(Functional_Severity_Level), y = residuals, color = "Functional_Severity_Level")) +
+  geom_point(data = hhadata2015.seperated, aes(x = as.numeric(Clinical_Severity_Level), y = residuals, color = "Clinical_Severity_Level")) +
   scale_color_manual(name = "Severity Levels", values = c("Service_Severity_Level" = "blue", "Functional_Severity_Level" = "green", "Clinical_Severity_Level" = "orange"))
 
 
