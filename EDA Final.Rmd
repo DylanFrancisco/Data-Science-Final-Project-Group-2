@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(kableExtra)
 library(knitr)
 library(caTools)
 library(caret)
@@ -199,10 +200,30 @@ hhadata2015.seperated$Service_Severity_Level <- as.numeric(gsub("\\D", "", hhada
   
 
 hhadata2015.seperated <- hhadata2015.seperated %>% 
-  select("HHRG", "Therapies", "HHRG.Description", "Clinical_Severity_Level", "Functional_Severity_Level", "Service_Severity_Level", "Distinct.Beneficiaries", "Total.HHA.Medicare.Payment.Amount", "Average.HHA.Medicare.Payment.Amount") 
+  select("HHRG","HHRG.Description" ,"Therapies", "Clinical_Severity_Level", "Functional_Severity_Level", "Service_Severity_Level", "Total.Episodes", "Average.HHA.Medicare.Payment.Amount", "Total.HHA.Medicare.Payment.Amount") 
 ```
 
+
+
 ```{r}
+
+col_names <- c("HHRG","Expected Therapy Visits", "Clinical Severity Level", "Functional Status Level",
+               "Service Utilization Level", "Total HHA Medicare Payment Amount" ,"Total Episodes", "Average HHA Medicare Payment Amount")
+
+hhadata2015.seperated_renamed <- hhadata2015.seperated %>%
+  select("HHRG", "Therapies", "Clinical_Severity_Level", "Functional_Severity_Level", "Service_Severity_Level", "Total.HHA.Medicare.Payment.Amount" ,"Total.Episodes", "Average.HHA.Medicare.Payment.Amount") %>% 
+  setNames(col_names) %>% 
+  slice(1:10)
+
+pretty_kable_table <- kable(hhadata2015.seperated_renamed, format = "html", caption = "HHRG Aggregation Data 2015 (First 10 rows)") 
+
+
+cat(pretty_kable_table, file = "OG Data.html")
+
+```
+
+
+```{r, eval = F}
 #creating summaries of the different serverity levels
 average_amt_by_service_severity <- hhadata2015.seperated %>%
   group_by(Service_Severity_Level) %>%
@@ -229,6 +250,10 @@ rmse_values_service <-  c()
 rmse_values_functional <- c()
 rmse_values_clinical <- c()
 rmse_values_therapies <- c()
+rmse_values_therapies_clinical <-  c()
+rmse_values_therapies_functional <- c()
+rmse_values_therapies_service <- c()
+rmse_values_all_var <- c()
 
 
 #Loop that removes each row, does the lm and predictions for the different models
@@ -248,7 +273,7 @@ for (i in 1:nrow(hhadata2015.seperated)) {
   
   
   #Empty model
-  lm_model_empty <- lm(x ~ y, data = row_removed)
+  lm_model_empty <- lm(Average.HHA.Medicare.Payment.Amount ~ 1, data = row_removed)
   prediction_empty <- predict(lm_model_empty, newdata = hhadata2015.seperated[i, ])
   rmse_empty <-  ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_empty)^2)
   rmse_values_empty <- c(rmse_values_empty, rmse_empty)
@@ -287,6 +312,38 @@ for (i in 1:nrow(hhadata2015.seperated)) {
   hhadata2015.seperated$RMSE_Therapies[i] <- rmse_therapies
   hhadata2015.seperated$prediction_therapies[i] <- prediction_therapies
   
+  #Model using Therapies + Clinical
+  lm_model_therapies_clinical <- lm(Average.HHA.Medicare.Payment.Amount ~ Therapies + Clinical_Severity_Level, data = row_removed)
+  prediction_therapies_clinical <- predict(lm_model_therapies_clinical, newdata = hhadata2015.seperated[i, ])
+  rmse_therapies_clinical <- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_therapies_clinical)^2)
+  rmse_values_therapies_clinical <- c(rmse_values_therapies_clinical, rmse_therapies_clinical)
+  hhadata2015.seperated$RMSE_Therapies_and_Clinical[i] <- rmse_therapies_clinical
+  hhadata2015.seperated$prediction_therapies_and_clinical[i] <- prediction_therapies_clinical
+  
+  #Model using Therapies + Functional
+  lm_model_therapies_functional <- lm(Average.HHA.Medicare.Payment.Amount ~ Therapies + Functional_Severity_Level, data = row_removed)
+  prediction_therapies_functional <- predict(lm_model_therapies_functional, newdata = hhadata2015.seperated[i, ])
+  rmse_therapies_functional <- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_therapies_functional)^2)
+  rmse_values_therapies_functional <- c(rmse_values_therapies_functional, rmse_therapies_functional)
+  hhadata2015.seperated$RMSE_Therapies_and_Functional[i] <- rmse_therapies_functional
+  hhadata2015.seperated$prediction_therapies_and_functional[i] <- prediction_therapies_functional
+  
+  #Model using Therapies + Service
+  lm_model_therapies_service <- lm(Average.HHA.Medicare.Payment.Amount ~ Therapies + Service_Severity_Level, data = row_removed)
+  prediction_therapies_service <- predict(lm_model_therapies_service, newdata = hhadata2015.seperated[i, ])
+  rmse_therapies_service <- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_therapies_service)^2)
+  rmse_values_therapies_service <- c(rmse_values_therapies_service, rmse_therapies_service)
+  hhadata2015.seperated$RMSE_Therapies_and_Service[i] <- rmse_therapies_service
+  hhadata2015.seperated$prediction_therapies_and_service[i] <- prediction_therapies_service
+  
+  #Model using all variables
+  lm_model_all_var <- lm(Average.HHA.Medicare.Payment.Amount ~ Therapies + Service_Severity_Level + Clinical_Severity_Level 
+                         + Functional_Severity_Level, data = row_removed)
+  prediction_all_var <- predict(lm_model_all_var, newdata = hhadata2015.seperated[i, ])
+  rmse_all_var <- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_all_var)^2)
+  rmse_values_all_var <- c(rmse_values_all_var, rmse_all_var)
+  hhadata2015.seperated$RMSE_All_Variables[i] <- rmse_all_var
+  hhadata2015.seperated$prediction_all_variables[i] <- prediction_all_var
 }
 
 average_rmse_severities <- sqrt(mean(rmse_values_severities))
@@ -295,6 +352,10 @@ average_rmse_service <- sqrt(mean(rmse_values_service))
 average_rmse_functional <- sqrt(mean(rmse_values_functional))
 average_rmse_clinical <- sqrt(mean(rmse_values_clinical))
 average_rmse_therapies <- sqrt(mean(rmse_values_therapies))
+average_rmse_therapies_clinical <- sqrt(mean(rmse_values_therapies_clinical))
+average_rmse_therapies_functional <- sqrt(mean(rmse_values_therapies_functional))
+average_rmse_therapies_service <- sqrt(mean(rmse_values_therapies_service))
+average_rmse_all_var<- sqrt(mean(rmse_values_all_var))
 
 print(paste("Average Root Mean Squared Error (RMSE) for Empty Model from Cross-Validation:", average_rmse_empty))
 print(paste("Average Root Mean Squared Error (RMSE) for Severities Model from Cross-Validation:", average_rmse_severities))
@@ -302,9 +363,37 @@ print(paste("Average Root Mean Squared Error (RMSE) for Service Severity Model f
 print(paste("Average Root Mean Squared Error (RMSE) for Functional Severity Model from Cross-Validation:", average_rmse_functional))
 print(paste("Average Root Mean Squared Error (RMSE) for Clinical Severity Model from Cross-Validation:", average_rmse_clinical))
 print(paste("Average Root Mean Squared Error (RMSE) for Therapies Model from Cross-Validation:", average_rmse_therapies))
+print(paste("Average Root Mean Squared Error (RMSE) for Therapies and Clinical Severity Model from Cross-Validation:", average_rmse_therapies_clinical))
+print(paste("Average Root Mean Squared Error (RMSE) for Therapies and Functional Severity Model from Cross-Validation:", average_rmse_therapies_functional))
+print(paste("Average Root Mean Squared Error (RMSE) for Therapies and Service Severity Model from Cross-Validation:", average_rmse_therapies_service))
+print(paste("Average Root Mean Squared Error (RMSE) for all varibales from Cross-Validation:", average_rmse_all_var))
 ```
 
+
 ```{r}
+rmse_data <- tibble(
+  Description = c(
+    "Empty Model", "Severities Model", "Service Severity Model", "Functional Severity Model",
+    "Clinical Severity Model", "Therapies Model", "Therapies and Clinical Severity Model",
+    "Therapies and Functional Severity Model", "Therapies and Service Severity Model", "All Variables Model"
+  ),
+  RMSE = round(c(
+    average_rmse_empty, average_rmse_severities, average_rmse_service, average_rmse_functional,
+    average_rmse_clinical, average_rmse_therapies, average_rmse_therapies_clinical,
+    average_rmse_therapies_functional, average_rmse_therapies_service, average_rmse_all_var
+  ), 2)
+)
+
+rmse_data <- arrange(rmse_data, desc(RMSE))
+
+rmse_kable_table <- kable(rmse_data, format = "html", caption = "RMSE Values For Linear Models")
+cat(rmse_kable_table, file = "rmse_table.html")
+rmse_kable_table
+```
+
+
+
+```{r, eval = F}
 
 #Creating residual plots for the different types of severity
 
@@ -336,10 +425,7 @@ plot_data3 <- ggplot(hhadata2015.seperated, aes(x = Clinical_Severity_Level, y =
 
 
 
-
-
-
-```{r}
+```{r, eval = F}
 #Combining into one plot
 combined_data <- bind_rows(
   data.frame(variable = "Service_Severity_Level", hhadata2015.seperated),

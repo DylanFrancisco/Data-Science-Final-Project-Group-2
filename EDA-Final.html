@@ -11,7 +11,7 @@
 
 <meta name="author" content="STOR 320.02 Group 2 (Ex: STOR 320.01 Group 12)" />
 
-<meta name="date" content="2023-07-26" />
+<meta name="date" content="2023-07-27" />
 
 <title>Exploratory Data Analysis</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Exploratory Data Analysis</h1>
 <h4 class="author">STOR 320.02 Group 2 (Ex: STOR 320.01 Group 12)</h4>
-<h4 class="date">July 26, 2023</h4>
+<h4 class="date">July 27, 2023</h4>
 
 </div>
 
@@ -587,17 +587,33 @@ difference, where a positive number represents that many more males at a
 HHA and a negative number represents that many more females. We used a
 line graph to show how the difference in sex at each provider was
 related to the total medicare payment.</p>
+<pre class="r"><code>MAE.func=function(actual,predict){
+  MAE=mean(abs(actual-predict))
+  return(MAE)
+}</code></pre>
 <pre class="r"><code>#Seperating the HHRG Description into new variables
 hhadata2015.seperated &lt;- hhadata2015.untidy %&gt;%
   separate(col = HHRG.Description, into = c(&quot;HHRG.Description&quot;, &quot;Therapies&quot;, &quot;Clinical_Severity_Level&quot;, &quot;Functional_Severity_Level&quot;, &quot;Service_Severity_Level&quot;),
            sep = &quot;,&quot;, remove = FALSE, extra = &quot;drop&quot;) 
 hhadata2015.seperated$Clinical_Severity_Level &lt;- as.numeric(gsub(&quot;\\D&quot;, &quot;&quot;, hhadata2015.seperated$Clinical_Severity_Level))
 hhadata2015.seperated$Functional_Severity_Level &lt;- as.numeric(gsub(&quot;\\D&quot;, &quot;&quot;, hhadata2015.seperated$Functional_Severity_Level))
-hhadata2015.seperated$Functional_Severity_Level &lt;- as.numeric(gsub(&quot;\\D&quot;, &quot;&quot;, hhadata2015.seperated$Functional_Severity_Level))
-hhadata2015.seperated$Service_Severity_Level &lt;- as.numeric(gsub(&quot;\\D&quot;, &quot;&quot;, hhadata2015.seperated$Service_Severity_Level))
+hhadata2015.seperated$Service_Severity_Level &lt;- as.numeric(gsub(&quot;\\D&quot;, &quot;&quot;, hhadata2015.seperated$Service_Severity_Level)) 
+  
 
 hhadata2015.seperated &lt;- hhadata2015.seperated %&gt;% 
-  select(&quot;HHRG&quot;, &quot;HHRG.Description&quot;, &quot;Clinical_Severity_Level&quot;, &quot;Functional_Severity_Level&quot;, &quot;Service_Severity_Level&quot;, &quot;Distinct.Beneficiaries&quot;, &quot;Total.HHA.Medicare.Payment.Amount&quot;, &quot;Average.HHA.Medicare.Payment.Amount&quot;) </code></pre>
+  select(&quot;HHRG&quot;,&quot;HHRG.Description&quot; ,&quot;Therapies&quot;, &quot;Clinical_Severity_Level&quot;, &quot;Functional_Severity_Level&quot;, &quot;Service_Severity_Level&quot;, &quot;Total.Episodes&quot;, &quot;Average.HHA.Medicare.Payment.Amount&quot;, &quot;Total.HHA.Medicare.Payment.Amount&quot;) </code></pre>
+<pre class="r"><code>col_names &lt;- c(&quot;HHRG&quot;,&quot;Expected Therapy Visits&quot;, &quot;Clinical Severity Level&quot;, &quot;Functional Status Level&quot;,
+               &quot;Service Utilization Level&quot;, &quot;Total HHA Medicare Payment Amount&quot; ,&quot;Total Episodes&quot;, &quot;Average HHA Medicare Payment Amount&quot;)
+
+hhadata2015.seperated_renamed &lt;- hhadata2015.seperated %&gt;%
+  select(&quot;HHRG&quot;, &quot;Therapies&quot;, &quot;Clinical_Severity_Level&quot;, &quot;Functional_Severity_Level&quot;, &quot;Service_Severity_Level&quot;, &quot;Total.HHA.Medicare.Payment.Amount&quot; ,&quot;Total.Episodes&quot;, &quot;Average.HHA.Medicare.Payment.Amount&quot;) %&gt;% 
+  setNames(col_names) %&gt;% 
+  slice(1:10)
+
+pretty_kable_table &lt;- kable(hhadata2015.seperated_renamed, format = &quot;html&quot;, caption = &quot;HHRG Aggregation Data 2015 (First 10 rows)&quot;) 
+
+
+cat(pretty_kable_table, file = &quot;OG Data.html&quot;)</code></pre>
 <pre class="r"><code>#creating summaries of the different serverity levels
 average_amt_by_service_severity &lt;- hhadata2015.seperated %&gt;%
   group_by(Service_Severity_Level) %&gt;%
@@ -609,66 +625,278 @@ average_amt_by_functional_severity &lt;- hhadata2015.seperated %&gt;%
   group_by(Functional_Severity_Level) %&gt;%
   summarize(Average_Amount_Provided_by_Medicare = sum(Total.HHA.Medicare.Payment.Amount) / sum(Distinct.Beneficiaries))
 
-average_amt_by_clincical_severity</code></pre>
-<pre><code>## # A tibble: 3 × 2
-##   Clinical_Severity_Level Average_Amount_Provided_by_Medicare
-##                     &lt;dbl&gt;                               &lt;dbl&gt;
-## 1                       1                               3250.
-## 2                       2                               3332.
-## 3                       3                               3956.</code></pre>
-<pre class="r"><code>average_amt_by_functional_severity</code></pre>
-<pre><code>## # A tibble: 3 × 2
-##   Functional_Severity_Level Average_Amount_Provided_by_Medicare
-##                       &lt;dbl&gt;                               &lt;dbl&gt;
-## 1                         1                               3382.
-## 2                         2                               3344.
-## 3                         3                               3832.</code></pre>
-<pre class="r"><code>average_amt_by_service_severity</code></pre>
-<pre><code>## # A tibble: 5 × 2
-##   Service_Severity_Level Average_Amount_Provided_by_Medicare
-##                    &lt;dbl&gt;                               &lt;dbl&gt;
-## 1                      1                               3425.
-## 2                      2                               3743.
-## 3                      3                               3499.
-## 4                      4                               3406.
-## 5                      5                               3887.</code></pre>
-<pre class="r"><code>set.seed(123)  
-split &lt;- sample.split(hhadata2015.seperated$Total.HHA.Medicare.Payment.Amount, SplitRatio = 0.8)
-train_data &lt;- filter(hhadata2015.seperated, split == TRUE)
-test_data &lt;- filter(hhadata2015.seperated, split == FALSE)
+average_amt_by_clincical_severity
+average_amt_by_functional_severity
+average_amt_by_service_severity</code></pre>
+<pre class="r"><code>set.seed(112)  
 
-# Create a linear model
-lm_model &lt;- lm(Average.HHA.Medicare.Payment.Amount ~ Service_Severity_Level + Functional_Severity_Level + Clinical_Severity_Level, data = train_data)
+rmse_values_severities &lt;- c()
+rmse_values_empty &lt;- c()
+rmse_values_service &lt;-  c()
+rmse_values_functional &lt;- c()
+rmse_values_clinical &lt;- c()
+rmse_values_therapies &lt;- c()
+rmse_values_therapies_clinical &lt;-  c()
+rmse_values_therapies_functional &lt;- c()
+rmse_values_therapies_service &lt;- c()
+rmse_values_all_var &lt;- c()
 
-# Make predictions on the test set
-predictions &lt;- predict(lm_model, newdata = test_data)
 
-# Calculate the model performance metrics (
-mse &lt;- mean((test_data$Average.HHA.Medicare.Payment.Amount - predictions)^2)
-rmse &lt;- sqrt(mse)
+#Loop that removes each row, does the lm and predictions for the different models
 
-# View the performance metrics
-print(paste(&quot;Root Mean Squared Error (RMSE):&quot;, rmse))</code></pre>
-<pre><code>## [1] &quot;Root Mean Squared Error (RMSE): 1142.78391157951&quot;</code></pre>
+for (i in 1:nrow(hhadata2015.seperated)) {
+  #Model using the 3 different severities 
+  row_removed &lt;- hhadata2015.seperated[-i, ]
+  
+  lm_model_serverties &lt;- lm(Average.HHA.Medicare.Payment.Amount ~ Service_Severity_Level + 
+                            Functional_Severity_Level + Clinical_Severity_Level,
+                            data =  row_removed)
+  prediction_severities &lt;- predict(lm_model_serverties, newdata = hhadata2015.seperated[i, ])
+  rmse_severities &lt;- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_severities)^2)
+  rmse_values_severities &lt;- c(rmse_values_severities, rmse_severities)
+  hhadata2015.seperated$RMSE_Severities[i] &lt;- rmse_severities
+  hhadata2015.seperated$prediction_severities[i] &lt;- prediction_severities
+  
+  
+  #Empty model
+  lm_model_empty &lt;- lm(Average.HHA.Medicare.Payment.Amount ~ 1, data = row_removed)
+  prediction_empty &lt;- predict(lm_model_empty, newdata = hhadata2015.seperated[i, ])
+  rmse_empty &lt;-  ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_empty)^2)
+  rmse_values_empty &lt;- c(rmse_values_empty, rmse_empty)
+  hhadata2015.seperated$RMSE_Empty[i] &lt;- rmse_empty
+  hhadata2015.seperated$prediction_empty[i] &lt;- prediction_empty 
+  
+  #Model using only Service Severity
+  lm_model_service &lt;- lm(Average.HHA.Medicare.Payment.Amount ~ Service_Severity_Level, data = row_removed)
+  prediction_service &lt;- predict(lm_model_service, newdata = hhadata2015.seperated[i, ])
+  rmse_service &lt;- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_service)^2)
+  rmse_values_service &lt;- c(rmse_values_service, rmse_service)
+  hhadata2015.seperated$RMSE_Service_Severity[i] &lt;- rmse_service
+  hhadata2015.seperated$prediction_service[i] &lt;- prediction_service
+  
+  #Model using only Functional Severity
+  lm_model_functional &lt;- lm(Average.HHA.Medicare.Payment.Amount ~ Functional_Severity_Level, data = row_removed)
+  prediction_functional &lt;- predict(lm_model_functional, newdata = hhadata2015.seperated[i, ])
+  rmse_functional &lt;- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_functional)^2)
+  rmse_values_functional &lt;- c(rmse_values_functional, rmse_functional)
+  hhadata2015.seperated$RMSE_Functional_Severity[i] &lt;- rmse_functional
+  hhadata2015.seperated$prediction_functional[i] &lt;- prediction_functional
+  
+  #Model using only Clinical Severity
+  lm_model_clinical &lt;- lm(Average.HHA.Medicare.Payment.Amount ~ Clinical_Severity_Level, data = row_removed)
+  prediction_clinical &lt;- predict(lm_model_clinical, newdata = hhadata2015.seperated[i, ])
+  rmse_clinical &lt;- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_clinical)^2)
+  rmse_values_clinical &lt;- c(rmse_values_clinical, rmse_clinical)
+  hhadata2015.seperated$RMSE_Clinical_Severity[i] &lt;- rmse_clinical
+  hhadata2015.seperated$prediction_clinical[i] &lt;- prediction_clinical
+  
+  #Model using Therapies
+  lm_model_therapies &lt;- lm(Average.HHA.Medicare.Payment.Amount ~ Therapies, data = row_removed)
+  prediction_therapies &lt;- predict(lm_model_therapies, newdata = hhadata2015.seperated[i, ])
+  rmse_therapies &lt;- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_therapies)^2)
+  rmse_values_therapies &lt;- c(rmse_values_therapies, rmse_therapies)
+  hhadata2015.seperated$RMSE_Therapies[i] &lt;- rmse_therapies
+  hhadata2015.seperated$prediction_therapies[i] &lt;- prediction_therapies
+  
+  #Model using Therapies + Clinical
+  lm_model_therapies_clinical &lt;- lm(Average.HHA.Medicare.Payment.Amount ~ Therapies + Clinical_Severity_Level, data = row_removed)
+  prediction_therapies_clinical &lt;- predict(lm_model_therapies_clinical, newdata = hhadata2015.seperated[i, ])
+  rmse_therapies_clinical &lt;- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_therapies_clinical)^2)
+  rmse_values_therapies_clinical &lt;- c(rmse_values_therapies_clinical, rmse_therapies_clinical)
+  hhadata2015.seperated$RMSE_Therapies_and_Clinical[i] &lt;- rmse_therapies_clinical
+  hhadata2015.seperated$prediction_therapies_and_clinical[i] &lt;- prediction_therapies_clinical
+  
+  #Model using Therapies + Functional
+  lm_model_therapies_functional &lt;- lm(Average.HHA.Medicare.Payment.Amount ~ Therapies + Functional_Severity_Level, data = row_removed)
+  prediction_therapies_functional &lt;- predict(lm_model_therapies_functional, newdata = hhadata2015.seperated[i, ])
+  rmse_therapies_functional &lt;- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_therapies_functional)^2)
+  rmse_values_therapies_functional &lt;- c(rmse_values_therapies_functional, rmse_therapies_functional)
+  hhadata2015.seperated$RMSE_Therapies_and_Functional[i] &lt;- rmse_therapies_functional
+  hhadata2015.seperated$prediction_therapies_and_functional[i] &lt;- prediction_therapies_functional
+  
+  #Model using Therapies + Service
+  lm_model_therapies_service &lt;- lm(Average.HHA.Medicare.Payment.Amount ~ Therapies + Service_Severity_Level, data = row_removed)
+  prediction_therapies_service &lt;- predict(lm_model_therapies_service, newdata = hhadata2015.seperated[i, ])
+  rmse_therapies_service &lt;- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_therapies_service)^2)
+  rmse_values_therapies_service &lt;- c(rmse_values_therapies_service, rmse_therapies_service)
+  hhadata2015.seperated$RMSE_Therapies_and_Service[i] &lt;- rmse_therapies_service
+  hhadata2015.seperated$prediction_therapies_and_service[i] &lt;- prediction_therapies_service
+  
+  #Model using all variables
+  lm_model_all_var &lt;- lm(Average.HHA.Medicare.Payment.Amount ~ Therapies + Service_Severity_Level + Clinical_Severity_Level 
+                         + Functional_Severity_Level, data = row_removed)
+  prediction_all_var &lt;- predict(lm_model_all_var, newdata = hhadata2015.seperated[i, ])
+  rmse_all_var &lt;- ((hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount[i] - prediction_all_var)^2)
+  rmse_values_all_var &lt;- c(rmse_values_all_var, rmse_all_var)
+  hhadata2015.seperated$RMSE_All_Variables[i] &lt;- rmse_all_var
+  hhadata2015.seperated$prediction_all_variables[i] &lt;- prediction_all_var
+}
+
+average_rmse_severities &lt;- sqrt(mean(rmse_values_severities))
+average_rmse_empty &lt;- sqrt(mean(rmse_values_empty))
+average_rmse_service &lt;- sqrt(mean(rmse_values_service))
+average_rmse_functional &lt;- sqrt(mean(rmse_values_functional))
+average_rmse_clinical &lt;- sqrt(mean(rmse_values_clinical))
+average_rmse_therapies &lt;- sqrt(mean(rmse_values_therapies))
+average_rmse_therapies_clinical &lt;- sqrt(mean(rmse_values_therapies_clinical))
+average_rmse_therapies_functional &lt;- sqrt(mean(rmse_values_therapies_functional))
+average_rmse_therapies_service &lt;- sqrt(mean(rmse_values_therapies_service))
+average_rmse_all_var&lt;- sqrt(mean(rmse_values_all_var))
+
+print(paste(&quot;Average Root Mean Squared Error (RMSE) for Empty Model from Cross-Validation:&quot;, average_rmse_empty))</code></pre>
+<pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for Empty Model from Cross-Validation: 1157.38463464864&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Average Root Mean Squared Error (RMSE) for Severities Model from Cross-Validation:&quot;, average_rmse_severities))</code></pre>
+<pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for Severities Model from Cross-Validation: 1119.66809929824&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Average Root Mean Squared Error (RMSE) for Service Severity Model from Cross-Validation:&quot;, average_rmse_service))</code></pre>
+<pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for Service Severity Model from Cross-Validation: 1162.95030073788&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Average Root Mean Squared Error (RMSE) for Functional Severity Model from Cross-Validation:&quot;, average_rmse_functional))</code></pre>
+<pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for Functional Severity Model from Cross-Validation: 1152.61005661469&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Average Root Mean Squared Error (RMSE) for Clinical Severity Model from Cross-Validation:&quot;, average_rmse_clinical))</code></pre>
+<pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for Clinical Severity Model from Cross-Validation: 1120.02749103059&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Average Root Mean Squared Error (RMSE) for Therapies Model from Cross-Validation:&quot;, average_rmse_therapies))</code></pre>
+<pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for Therapies Model from Cross-Validation: 653.000397583021&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Average Root Mean Squared Error (RMSE) for Therapies and Clinical Severity Model from Cross-Validation:&quot;, average_rmse_therapies_clinical))</code></pre>
+<pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for Therapies and Clinical Severity Model from Cross-Validation: 569.530972943303&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Average Root Mean Squared Error (RMSE) for Therapies and Functional Severity Model from Cross-Validation:&quot;, average_rmse_therapies_functional))</code></pre>
+<pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for Therapies and Functional Severity Model from Cross-Validation: 634.027220260747&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Average Root Mean Squared Error (RMSE) for Therapies and Service Severity Model from Cross-Validation:&quot;, average_rmse_therapies_service))</code></pre>
+<pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for Therapies and Service Severity Model from Cross-Validation: 416.034766869807&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Average Root Mean Squared Error (RMSE) for all varibales from Cross-Validation:&quot;, average_rmse_all_var))</code></pre>
+<pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for all varibales from Cross-Validation: 190.868780817263&quot;</code></pre>
+<pre class="r"><code>rmse_data &lt;- tibble(
+  Description = c(
+    &quot;Empty Model&quot;, &quot;Severities Model&quot;, &quot;Service Severity Model&quot;, &quot;Functional Severity Model&quot;,
+    &quot;Clinical Severity Model&quot;, &quot;Therapies Model&quot;, &quot;Therapies and Clinical Severity Model&quot;,
+    &quot;Therapies and Functional Severity Model&quot;, &quot;Therapies and Service Severity Model&quot;, &quot;All Variables Model&quot;
+  ),
+  RMSE = round(c(
+    average_rmse_empty, average_rmse_severities, average_rmse_service, average_rmse_functional,
+    average_rmse_clinical, average_rmse_therapies, average_rmse_therapies_clinical,
+    average_rmse_therapies_functional, average_rmse_therapies_service, average_rmse_all_var
+  ), 2)
+)
+
+rmse_data &lt;- arrange(rmse_data, desc(RMSE))
+
+rmse_kable_table &lt;- kable(rmse_data, format = &quot;html&quot;, caption = &quot;RMSE Values For Linear Models&quot;)
+cat(rmse_kable_table, file = &quot;rmse_table.html&quot;)
+rmse_kable_table</code></pre>
+<table>
+<caption>
+RMSE Values For Linear Models
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Description
+</th>
+<th style="text-align:right;">
+RMSE
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Service Severity Model
+</td>
+<td style="text-align:right;">
+1162.95
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Empty Model
+</td>
+<td style="text-align:right;">
+1157.38
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Functional Severity Model
+</td>
+<td style="text-align:right;">
+1152.61
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Clinical Severity Model
+</td>
+<td style="text-align:right;">
+1120.03
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Severities Model
+</td>
+<td style="text-align:right;">
+1119.67
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Therapies Model
+</td>
+<td style="text-align:right;">
+653.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Therapies and Functional Severity Model
+</td>
+<td style="text-align:right;">
+634.03
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Therapies and Clinical Severity Model
+</td>
+<td style="text-align:right;">
+569.53
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Therapies and Service Severity Model
+</td>
+<td style="text-align:right;">
+416.03
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+All Variables Model
+</td>
+<td style="text-align:right;">
+190.87
+</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>#Creating residual plots for the different types of severity
 
-test_data$residuals &lt;- test_data$Average.HHA.Medicare.Payment.Amount - predictions
+hhadata2015.seperated$residuals &lt;- hhadata2015.seperated$Average.HHA.Medicare.Payment.Amount - hhadata2015.seperated$Predictions
 
-plot_data1 &lt;- ggplot(test_data, aes(x = Service_Severity_Level, y = residuals)) +
+plot_data1 &lt;- ggplot(hhadata2015.seperated, aes(x = Service_Severity_Level, y = residuals)) +
   geom_point() +
   geom_hline(yintercept = 0, color = &quot;red&quot;, linetype = &quot;dashed&quot;) +
   labs(x = &quot;Service Severity Level&quot;, y = &quot;Residuals&quot;) +
   ggtitle(&quot;Linear Model Residuals&quot;) +
   theme_minimal()
 
-plot_data2 &lt;- ggplot(test_data, aes(x = Functional_Severity_Level, y = residuals)) +
+plot_data2 &lt;- ggplot(hhadata2015.seperated, aes(x = Functional_Severity_Level, y = residuals)) +
   geom_point() +
   geom_hline(yintercept = 0, color = &quot;red&quot;, linetype = &quot;dashed&quot;) +
   labs(x = &quot;Functional Severity Level&quot;, y = &quot;Residuals&quot;) +
   ggtitle(&quot;Linear Model Residuals&quot;) +
   theme_minimal()
 
-plot_data3 &lt;- ggplot(test_data, aes(x = Clinical_Severity_Level, y = residuals)) +
+plot_data3 &lt;- ggplot(hhadata2015.seperated, aes(x = Clinical_Severity_Level, y = residuals)) +
   geom_point() +
   geom_hline(yintercept = 0, color = &quot;red&quot;, linetype = &quot;dashed&quot;) +
   labs(x = &quot;Clinical Severity Level&quot;, y = &quot;Residuals&quot;) +
@@ -676,23 +904,22 @@ plot_data3 &lt;- ggplot(test_data, aes(x = Clinical_Severity_Level, y = residual
   theme_minimal()</code></pre>
 <pre class="r"><code>#Combining into one plot
 combined_data &lt;- bind_rows(
-  data.frame(variable = &quot;Service_Severity_Level&quot;, test_data),
-  data.frame(variable = &quot;Functional_Severity_Level&quot;, test_data),
-  data.frame(variable = &quot;Clinical_Severity_Level&quot;, test_data)
+  data.frame(variable = &quot;Service_Severity_Level&quot;, hhadata2015.seperated),
+  data.frame(variable = &quot;Functional_Severity_Level&quot;, hhadata2015.seperated),
+  data.frame(variable = &quot;Clinical_Severity_Level&quot;, hhadata2015.seperated)
 )
 
 # Create the overlapped plot
-ggplot(test_data, aes(x = as.numeric(Service_Severity_Level), y = residuals, color = &quot;Service_Severity_Level&quot;)) +
+ggplot(hhadata2015.seperated, aes(x = as.numeric(Service_Severity_Level), y = residuals, color = &quot;Service_Severity_Level&quot;)) +
   geom_point() +
   geom_hline(yintercept = 0, color = &quot;red&quot;, linetype = &quot;dashed&quot;) +
   labs(x = &quot;Severity Level&quot;, y = &quot;Residuals&quot;) +
   ggtitle(&quot;Linear Model Residuals&quot;) +
   scale_x_continuous(breaks = 1:4, labels = c(&quot;Severity 1&quot;, &quot;Severity 2&quot;, &quot;Severity 3&quot;, &quot;Severity 4&quot;)) +
   theme_minimal() +
-  geom_point(data = test_data, aes(x = as.numeric(Functional_Severity_Level), y = residuals, color = &quot;Functional_Severity_Level&quot;)) +
-  geom_point(data = test_data, aes(x = as.numeric(Clinical_Severity_Level), y = residuals, color = &quot;Clinical_Severity_Level&quot;)) +
+  geom_point(data = hhadata2015.seperated, aes(x = as.numeric(Functional_Severity_Level), y = residuals, color = &quot;Functional_Severity_Level&quot;)) +
+  geom_point(data = hhadata2015.seperated, aes(x = as.numeric(Clinical_Severity_Level), y = residuals, color = &quot;Clinical_Severity_Level&quot;)) +
   scale_color_manual(name = &quot;Severity Levels&quot;, values = c(&quot;Service_Severity_Level&quot; = &quot;blue&quot;, &quot;Functional_Severity_Level&quot; = &quot;green&quot;, &quot;Clinical_Severity_Level&quot; = &quot;orange&quot;))</code></pre>
-<p><img src="data:image/png;base64,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" width="672" /></p>
 </div>
 
 
