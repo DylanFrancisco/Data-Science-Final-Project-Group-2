@@ -765,9 +765,9 @@ print(paste(&quot;Average Root Mean Squared Error (RMSE) for Empty Model from Cr
 <pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for all varibales from Cross-Validation: 190.868780817263&quot;</code></pre>
 <pre class="r"><code>rmse_data &lt;- tibble(
   Description = c(
-    &quot;Empty Model&quot;, &quot;Severities Model&quot;, &quot;Service Severity Model&quot;, &quot;Functional Severity Model&quot;,
-    &quot;Clinical Severity Model&quot;, &quot;Therapies Model&quot;, &quot;Therapies and Clinical Severity Model&quot;,
-    &quot;Therapies and Functional Severity Model&quot;, &quot;Therapies and Service Severity Model&quot;, &quot;All Variables Model&quot;
+    &quot;Empty Model&quot;, &quot;Service, Functional, and Clinical Severity Level Model&quot;, &quot;Service Utilization Level Model&quot;, &quot;Functional Status Level Model&quot;,
+    &quot;Clinical Severity Level Model&quot;, &quot;Therapy Visists Model&quot;, &quot;Therapy Visists and Clinical Service Level Model&quot;,
+    &quot;Therapy Visists and Functional Status Level Model&quot;, &quot;Therapy Visists and Service Utilization Level Model&quot;, &quot;Therapy Visists and All Three Levels Model&quot;
   ),
   RMSE = round(c(
     average_rmse_empty, average_rmse_severities, average_rmse_service, average_rmse_functional,
@@ -798,7 +798,7 @@ RMSE
 <tbody>
 <tr>
 <td style="text-align:left;">
-Service Severity Model
+Service Utilization Level Model
 </td>
 <td style="text-align:right;">
 1162.95
@@ -814,7 +814,7 @@ Empty Model
 </tr>
 <tr>
 <td style="text-align:left;">
-Functional Severity Model
+Functional Status Level Model
 </td>
 <td style="text-align:right;">
 1152.61
@@ -822,7 +822,7 @@ Functional Severity Model
 </tr>
 <tr>
 <td style="text-align:left;">
-Clinical Severity Model
+Clinical Severity Level Model
 </td>
 <td style="text-align:right;">
 1120.03
@@ -830,7 +830,7 @@ Clinical Severity Model
 </tr>
 <tr>
 <td style="text-align:left;">
-Severities Model
+Service, Functional, and Clinical Severity Level Model
 </td>
 <td style="text-align:right;">
 1119.67
@@ -838,7 +838,7 @@ Severities Model
 </tr>
 <tr>
 <td style="text-align:left;">
-Therapies Model
+Therapy Visists Model
 </td>
 <td style="text-align:right;">
 653.00
@@ -846,7 +846,7 @@ Therapies Model
 </tr>
 <tr>
 <td style="text-align:left;">
-Therapies and Functional Severity Model
+Therapy Visists and Functional Status Level Model
 </td>
 <td style="text-align:right;">
 634.03
@@ -854,7 +854,7 @@ Therapies and Functional Severity Model
 </tr>
 <tr>
 <td style="text-align:left;">
-Therapies and Clinical Severity Model
+Therapy Visists and Clinical Service Level Model
 </td>
 <td style="text-align:right;">
 569.53
@@ -862,7 +862,7 @@ Therapies and Clinical Severity Model
 </tr>
 <tr>
 <td style="text-align:left;">
-Therapies and Service Severity Model
+Therapy Visists and Service Utilization Level Model
 </td>
 <td style="text-align:right;">
 416.03
@@ -870,7 +870,7 @@ Therapies and Service Severity Model
 </tr>
 <tr>
 <td style="text-align:left;">
-All Variables Model
+Therapy Visists and All Three Levels Model
 </td>
 <td style="text-align:right;">
 190.87

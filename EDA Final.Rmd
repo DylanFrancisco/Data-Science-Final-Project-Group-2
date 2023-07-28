@@ -373,9 +373,9 @@ print(paste("Average Root Mean Squared Error (RMSE) for all varibales from Cross
 ```{r}
 rmse_data <- tibble(
   Description = c(
-    "Empty Model", "Severities Model", "Service Severity Model", "Functional Severity Model",
-    "Clinical Severity Model", "Therapies Model", "Therapies and Clinical Severity Model",
-    "Therapies and Functional Severity Model", "Therapies and Service Severity Model", "All Variables Model"
+    "Empty Model", "Service, Functional, and Clinical Severity Level Model", "Service Utilization Level Model", "Functional Status Level Model",
+    "Clinical Severity Level Model", "Therapy Visists Model", "Therapy Visists and Clinical Service Level Model",
+    "Therapy Visists and Functional Status Level Model", "Therapy Visists and Service Utilization Level Model", "Therapy Visists and All Three Levels Model"
   ),
   RMSE = round(c(
     average_rmse_empty, average_rmse_severities, average_rmse_service, average_rmse_functional,

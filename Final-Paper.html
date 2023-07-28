@@ -427,10 +427,10 @@ Medicare provided for <strong>153</strong> different HHRG codes. A HRRG
 code, also know as a case mix score, is a standardized categorical
 system to group resources use for Medicare providers (NAHC/Source
 needed). These codes are made up using various variables such as
-<strong>Expected Therapy Visits</strong>, <strong>Clinical
-Severity</strong>, <strong>Functional Status</strong> and
-<strong>Service Utilization Domains</strong>. Also used in the analysis
-of this question was the <strong>Average HHA Medicare Payment
+<strong>Expected Therapy Visits</strong>, <strong>Clinical Severity
+Level</strong>, <strong>Functional Status Level</strong> and
+<strong>Service Utilization Domain Level</strong>. Also used in the
+analysis of this question was the <strong>Average HHA Medicare Payment
 Amount</strong>. This is a variable that was created by dividing the
 <strong>Total HHA Medicare Payment Amount</strong> by the <strong>Total
 Episodes</strong>, where the <strong>Total HHA Medicare Payment
@@ -446,8 +446,8 @@ separating the data to create unique, categorical variables.</p>
    <th style="text-align:left;"> HHRG </th>
    <th style="text-align:left;"> Expected Therapy Visits </th>
    <th style="text-align:right;"> Clinical Severity Level </th>
-   <th style="text-align:right;"> Functional Severity Level </th>
-   <th style="text-align:right;"> Service Severity Level </th>
+   <th style="text-align:right;"> Functional Status Level </th>
+   <th style="text-align:right;"> Service Utilization Level </th>
    <th style="text-align:right;"> Total HHA Medicare Payment Amount </th>
    <th style="text-align:right;"> Total Episodes </th>
    <th style="text-align:right;"> Average HHA Medicare Payment Amount </th>
@@ -566,12 +566,12 @@ data set called <strong>HHRG Description</strong>. The variable was
 separated to allow more precise modeling of the data. The
 <strong>Expected Therapy Visits</strong> variable is the total number of
 therapy visits that are expected for people grouped together. The
-<strong>Clinical Severity</strong> is a variable ranged from 1 to 3
-which details how bad the patient’s clinical condition is. The
-<strong>Functional Status</strong> variable, also ranged 1 to 3
+<strong>Clinical Severity Level</strong> is a variable ranged from 1 to
+3 which details how bad the patient’s clinical condition is. The
+<strong>Functional Status Level</strong> variable, also ranged 1 to 3
 described how functional the patient is. Finally, the <strong>Service
 Utilization Level</strong>, ranged 1 to 5, details how much service is
-expcted to be needed for the patients within that group.</p>
+expected to be needed for the patients within that group.</p>
 </div>
 <div id="results" class="section level1">
 <h1>RESULTS</h1>
@@ -593,6 +593,18 @@ IN THIS SECTION TO HELP THE READER VISUALIZE WHAT YOU ARE TRYING TO
 EXPLAIN.</p>
 <div id="question-1" class="section level2">
 <h2>QUESTION 1</h2>
+<p>(Needs to be answered to show that we used linear modeling to try to
+predict the average cost covered by medicare based on the various
+variables. We used a cross validation to create linear models. Since the
+data set only contained 153 rows, we could not split the data into train
+and test. We had to use every HHRG and create predictions that way.
+Doing so showed us that the number of therapy visits was the largest
+factor in predicting price based of the RMSE. Based off this
+information, we could then include multiple regressions into our models,
+by using the other variables. Using these other variables greatly
+increased our predictions to show that we could hypothetically use these
+variables to predict. By using the therapies and all severity variables,
+we created a fairly accurate model.)</p>
 <table>
 <caption>RMSE Values For Linear Models</caption>
  <thead>
@@ -603,7 +615,7 @@ EXPLAIN.</p>
  </thead>
 <tbody>
   <tr>
-   <td style="text-align:left;"> Service Severity Model </td>
+   <td style="text-align:left;"> Service Utilization Level Model </td>
    <td style="text-align:right;"> 1162.95 </td>
   </tr>
   <tr>
@@ -611,35 +623,35 @@ EXPLAIN.</p>
    <td style="text-align:right;"> 1157.38 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Functional Severity Model </td>
+   <td style="text-align:left;"> Functional Status Level Model </td>
    <td style="text-align:right;"> 1152.61 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Clinical Severity Model </td>
+   <td style="text-align:left;"> Clinical Severity Level Model </td>
    <td style="text-align:right;"> 1120.03 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Severities Model </td>
+   <td style="text-align:left;"> Service, Functional, and Clinical Severity Level Model </td>
    <td style="text-align:right;"> 1119.67 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Therapies Model </td>
+   <td style="text-align:left;"> Therapy Visists Model </td>
    <td style="text-align:right;"> 653.00 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Therapies and Functional Severity Model </td>
+   <td style="text-align:left;"> Therapy Visists and Functional Status Level Model </td>
    <td style="text-align:right;"> 634.03 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Therapies and Clinical Severity Model </td>
+   <td style="text-align:left;"> Therapy Visists and Clinical Service Level Model </td>
    <td style="text-align:right;"> 569.53 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Therapies and Service Severity Model </td>
+   <td style="text-align:left;"> Therapy Visists and Service Utilization Level Model </td>
    <td style="text-align:right;"> 416.03 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> All Variables Model </td>
+   <td style="text-align:left;"> Therapy Visists and All Three Levels Model </td>
    <td style="text-align:right;"> 190.87 </td>
   </tr>
 </tbody>
