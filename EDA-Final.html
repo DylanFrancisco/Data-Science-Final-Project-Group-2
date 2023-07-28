@@ -11,7 +11,7 @@
 
 <meta name="author" content="STOR 320.02 Group 2 (Ex: STOR 320.01 Group 12)" />
 
-<meta name="date" content="2023-07-27" />
+<meta name="date" content="2023-07-28" />
 
 <title>Exploratory Data Analysis</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Exploratory Data Analysis</h1>
 <h4 class="author">STOR 320.02 Group 2 (Ex: STOR 320.01 Group 12)</h4>
-<h4 class="date">July 27, 2023</h4>
+<h4 class="date">July 28, 2023</h4>
 
 </div>
 
@@ -763,6 +763,20 @@ print(paste(&quot;Average Root Mean Squared Error (RMSE) for Empty Model from Cr
 <pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for Therapies and Service Severity Model from Cross-Validation: 416.034766869807&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;Average Root Mean Squared Error (RMSE) for all varibales from Cross-Validation:&quot;, average_rmse_all_var))</code></pre>
 <pre><code>## [1] &quot;Average Root Mean Squared Error (RMSE) for all varibales from Cross-Validation: 190.868780817263&quot;</code></pre>
+<pre class="r"><code>scatterplot_all_vars &lt;- ggplot(hhadata2015.seperated, aes(x = Average.HHA.Medicare.Payment.Amount, y = prediction_all_variables)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, color = &quot;red&quot;, linetype = &quot;dashed&quot;) +
+  labs(x = &quot;Actual HHA Medicare Payment Amount&quot;, y = &quot;Predicted HHA Medicare Payment Amount&quot;) +
+  ggtitle(&quot;Scatterplot with Prediction Line - Therapy Visists and 3 Levels Model&quot;) +
+  theme_minimal()
+ggsave(filename = &quot;scatterplot_all_vars.jpeg&quot;, plot = scatterplot_all_vars, width = 7, height = 5, dpi = 300)
+
+scatterplot_severities &lt;- ggplot(hhadata2015.seperated, aes(x = Average.HHA.Medicare.Payment.Amount, y = prediction_severities)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, color = &quot;red&quot;, linetype = &quot;dashed&quot;) +
+  labs(x = &quot;Actual HHA Medicare Payment Amount&quot;, y = &quot;Predicted HHA Medicare Payment Amount&quot;) +
+  ggtitle(&quot;Scatterplot with Prediction Line - Severities Model&quot;) +
+  theme_minimal()</code></pre>
 <pre class="r"><code>rmse_data &lt;- tibble(
   Description = c(
     &quot;Empty Model&quot;, &quot;Service, Functional, and Clinical Severity Level Model&quot;, &quot;Service Utilization Level Model&quot;, &quot;Functional Status Level Model&quot;,

@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(htmltools)
+library(knitr)
 #Put Necessary Libraries Here
 ```
 
@@ -48,6 +49,10 @@ IN LESS THAN 6 PARAGRAPHS FOR EACH OF THE TWO QUESTIONS, YOU SHOULD DESCRIBE THE
 
 ```{r, echo = F}
 includeHTML("rmse_table.html")
+```
+
+```{r, echo = F}
+include_graphics("scatterplot_all_vars.jpeg")
 ```
 
 ## QUESTION 2
