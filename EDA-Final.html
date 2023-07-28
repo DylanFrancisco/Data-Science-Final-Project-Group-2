@@ -610,7 +610,10 @@ hhadata2015.seperated_renamed &lt;- hhadata2015.seperated %&gt;%
   setNames(col_names) %&gt;% 
   slice(1:10)
 
+
 pretty_kable_table &lt;- kable(hhadata2015.seperated_renamed, format = &quot;html&quot;, caption = &quot;HHRG Aggregation Data 2015 (First 10 rows)&quot;) 
+
+
 
 
 cat(pretty_kable_table, file = &quot;OG Data.html&quot;)</code></pre>
@@ -791,11 +794,12 @@ scatterplot_severities &lt;- ggplot(hhadata2015.seperated, aes(x = Average.HHA.M
 )
 
 rmse_data &lt;- arrange(rmse_data, desc(RMSE))
-
-rmse_kable_table &lt;- kable(rmse_data, format = &quot;html&quot;, caption = &quot;RMSE Values For Linear Models&quot;)
+rmse_data$RMSE &lt;- paste0(&quot;$&quot;, rmse_data$RMSE)
+rmse_kable_table &lt;- kable(rmse_data, format = &quot;html&quot;, caption = &quot;RMSE Values For Linear Models&quot;, linesep = &quot;&lt;br&gt;&quot;, table.attr = &#39;style=&quot;border-collapse: collapse; width: 100%;&quot;&#39;,
+  row.attr = &#39;style=&quot;border-bottom: 2px solid black;&quot;&#39;)
 cat(rmse_kable_table, file = &quot;rmse_table.html&quot;)
 rmse_kable_table</code></pre>
-<table>
+<table style="border-collapse: collapse; width: 100%;">
 <caption>
 RMSE Values For Linear Models
 </caption>
@@ -804,7 +808,7 @@ RMSE Values For Linear Models
 <th style="text-align:left;">
 Description
 </th>
-<th style="text-align:right;">
+<th style="text-align:left;">
 RMSE
 </th>
 </tr>
@@ -814,80 +818,80 @@ RMSE
 <td style="text-align:left;">
 Service Utilization Level Model
 </td>
-<td style="text-align:right;">
-1162.95
+<td style="text-align:left;">
+$1162.95
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
 Empty Model
 </td>
-<td style="text-align:right;">
-1157.38
+<td style="text-align:left;">
+$1157.38
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
 Functional Status Level Model
 </td>
-<td style="text-align:right;">
-1152.61
+<td style="text-align:left;">
+$1152.61
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
 Clinical Severity Level Model
 </td>
-<td style="text-align:right;">
-1120.03
+<td style="text-align:left;">
+$1120.03
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
 Service, Functional, and Clinical Severity Level Model
 </td>
-<td style="text-align:right;">
-1119.67
+<td style="text-align:left;">
+$1119.67
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
 Therapy Visists Model
 </td>
-<td style="text-align:right;">
-653.00
+<td style="text-align:left;">
+$653
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
 Therapy Visists and Functional Status Level Model
 </td>
-<td style="text-align:right;">
-634.03
+<td style="text-align:left;">
+$634.03
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
 Therapy Visists and Clinical Service Level Model
 </td>
-<td style="text-align:right;">
-569.53
+<td style="text-align:left;">
+$569.53
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
 Therapy Visists and Service Utilization Level Model
 </td>
-<td style="text-align:right;">
-416.03
+<td style="text-align:left;">
+$416.03
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
 Therapy Visists and All Three Levels Model
 </td>
-<td style="text-align:right;">
-190.87
+<td style="text-align:left;">
+$190.87
 </td>
 </tr>
 </tbody>

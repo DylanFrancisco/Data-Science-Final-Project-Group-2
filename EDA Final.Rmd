@@ -215,7 +215,10 @@ hhadata2015.seperated_renamed <- hhadata2015.seperated %>%
   setNames(col_names) %>% 
   slice(1:10)
 
+
 pretty_kable_table <- kable(hhadata2015.seperated_renamed, format = "html", caption = "HHRG Aggregation Data 2015 (First 10 rows)") 
+
+
 
 
 cat(pretty_kable_table, file = "OG Data.html")
@@ -404,8 +407,9 @@ rmse_data <- tibble(
 )
 
 rmse_data <- arrange(rmse_data, desc(RMSE))
-
-rmse_kable_table <- kable(rmse_data, format = "html", caption = "RMSE Values For Linear Models")
+rmse_data$RMSE <- paste0("$", rmse_data$RMSE)
+rmse_kable_table <- kable(rmse_data, format = "html", caption = "RMSE Values For Linear Models", linesep = "<br>", table.attr = 'style="border-collapse: collapse; width: 100%;"',
+  row.attr = 'style="border-bottom: 2px solid black;"')
 cat(rmse_kable_table, file = "rmse_table.html")
 rmse_kable_table
 ```
