@@ -12,6 +12,7 @@ library(kableExtra)
 library(knitr)
 library(caTools)
 library(caret)
+library(purrr)
 
 
 #setwd("C:/Users/dylan/Documents/GitHub/Data-Science-Final-Project-Group-2")
@@ -379,22 +380,7 @@ scatterplot_all_vars <- ggplot(hhadata2015.seperated, aes(x = Average.HHA.Medica
   labs(x = "Actual HHA Medicare Payment Amount", y = "Predicted HHA Medicare Payment Amount") +
   ggtitle("Scatterplot with Prediction Line - Therapy Visists and 3 Levels Model") +
   theme_minimal()
-
 ggsave(filename = "scatterplot_all_vars.jpeg", plot = scatterplot_all_vars, width = 7, height = 5, dpi = 300)
-
-selected_hhrg_codes <- c("1AFK", "1CGM", "2AHL", "2CHL", "3AGN", "3BHP", "3CHL", "4BGM", "4CGK", "5CFK")
-
-selected_data <- hhadata2015.seperated %>% 
-  filter(HHRG %in% selected_hhrg_codes)
-
-
-bar_plot_therapy_visits <- ggplot(selected_data, aes(x = HHRG, y = `Therapies`)) +
-  geom_bar(stat = "identity") +
-  labs(x = "HHRG", y = "Expected Therapy Visits") +
-  ggtitle("Bar Plot for Expected Therapy Visits (Selected HHRG Codes)") +
-  theme_minimal()
-
-ggsave(filename = "bar_plot_therapy_visits.jpeg", plot = bar_plot_therapy_visits, width = 7, height = 5, dpi = 300)
 
 scatterplot_severities <- ggplot(hhadata2015.seperated, aes(x = Average.HHA.Medicare.Payment.Amount, y = prediction_severities)) +
   geom_point() +
@@ -482,8 +468,375 @@ ggplot(hhadata2015.seperated, aes(x = as.numeric(Service_Severity_Level), y = re
   geom_point(data = hhadata2015.seperated, aes(x = as.numeric(Functional_Severity_Level), y = residuals, color = "Functional_Severity_Level")) +
   geom_point(data = hhadata2015.seperated, aes(x = as.numeric(Clinical_Severity_Level), y = residuals, color = "Clinical_Severity_Level")) +
   scale_color_manual(name = "Severity Levels", values = c("Service_Severity_Level" = "blue", "Functional_Severity_Level" = "green", "Clinical_Severity_Level" = "orange"))
+```
 
 
+```{r, eval = F}
+# can we use past years data to train a linear model such that is can predict the next years hha charge throguh the same variables?
+all_models_mae = c()
+# step 1: Train and Test data
+hhap_13 <- read.csv("CSVs/medicare-home-health-provider-by-hhrg-aggregate-table-cy-2013.csv")
+hhap_14 <- read.csv("CSVs/medicare-home-health-agency-hha-provider-by-hhrg-aggregate-report-cy-2014.csv")
+hhap_15 <- read.csv("CSVs/medicare-home-health-agency-hha-provider-by-hhrg-aggregate-report-cy-2015.csv")
+
+Test = hhap_15 
+# we will be using the past data sets such as year 2013 and 2014 to fit a linear model and we will then be using 2015 as the test data set to evaluate predictions. Above I out the data into seperate tables to be easier to manipulate.
+
+
+#step2: manipulation
+hha_13_1 <- hhap_13 %>% select(-20) %>% mutate(key = paste(as.character(Provider.ID), HHRG)) %>% select(20, everything()) %>% mutate(Year = replicate(nrow(hhap_13), 2014))
+sum(duplicated(hha_13_1$key))
+# making a key to join the two tables together. the duplicated and sum functions were sued to make sure that the key was a key
+hha_13_1
+
+#I will now apply the same method to 2014
+hha_14_1 <- hhap_14 %>% select(-20) %>% mutate(key = paste(as.character(Provider.ID), HHRG)) %>% select(20, everything()) %>% mutate(Year = replicate(nrow(hhap_14), 2014))
+sum(duplicated(hha_14_1$key))
+
+# now we join
+Train = inner_join(hha_14_1, hha_13_1, by = "key" )
+
+#step3: visualization and analysis for modeling 
+#col_names = colnames(Train)
+#ggplot(Train) + geom_point(aes(x = col_names[10], y= col_names[19]))
+```
+
+
+```{r, eval = F}
+# just using the previous years data 
+# step 1: Train and Test data
+hhap_13 <- read.csv("CSVs/medicare-home-health-provider-by-hhrg-aggregate-table-cy-2013.csv")
+hhap_14 <- read.csv("CSVs/medicare-home-health-agency-hha-provider-by-hhrg-aggregate-report-cy-2014.csv")
+hhap_15 <- read.csv("CSVs/medicare-home-health-agency-hha-provider-by-hhrg-aggregate-report-cy-2015.csv")
+
+#step1: visualization
+ggplot(hhap_14) + geom_point(aes(x = Total.Episodes, y = Average.HHA.Charge.Amount ))
+
+ggplot(hhap_14) + geom_point(aes(x = Average.Number.of.Total.Visits.Per.Episode, y = Average.HHA.Charge.Amount ))
+ggplot(hhap_15) + geom_point(aes(x = Average.Number.of.Total.Visits.Per.Episode, y = Average.HHA.Charge.Amount ))
+
+ggplot(hhap_14) + geom_point(aes(x = Average.Number.of.Skilled.Nursing.Visits, y = Average.HHA.Charge.Amount ))
+
+ggplot(hhap_14) + geom_point(aes(x = Average.Number.of.PT.Visits, y = Average.HHA.Charge.Amount ))
+```
+
+
+```{r, eval = F}
+# step2: building linear models.(single variable)
+mae_total = c()
+index = colnames(hhap_15)[9:17]
+mod1 <- lm(Average.HHA.Charge.Amount~Total.Episodes, hhap_14)
+Table_1 <- hhap_15 %>% add_predictions(mod1, var="Pred") %>%  add_residuals(mod1, "resid") %>% select(Pred, Average.HHA.Charge.Amount, resid)
+mae_Total_eps <- mean(abs(Table_1$resid))
+mae_total[1] <- mae_Total_eps
+
+mod2 <- lm(Average.HHA.Charge.Amount~Distinct.Beneficiaries, hhap_14)
+Table_2 <- hhap_15 %>% add_predictions(mod2, var="Pred_dis_ben") %>%  add_residuals(mod2, "resid_dis_ben") %>% select(Pred_dis_ben, Average.HHA.Charge.Amount, resid_dis_ben)
+mae_dis_ben <- mean(abs(Table_2$resid_dis_ben))
+mae_total[2] <-mae_dis_ben
+
+
+mod3 <- lm(Average.HHA.Charge.Amount~Average.Number.of.Total.Visits.Per.Episode, hhap_14)
+Table_3 <- hhap_15 %>% add_predictions(mod3, var="Pred_total_visits") %>%  add_residuals(mod3, "resid_total_visits") %>% select(Pred_total_visits, Average.HHA.Charge.Amount, resid_total_visits)
+mae_total_visits <- mean(abs(Table_3$resid_total_visits))
+mae_total[3] <-mae_total_visits
+
+mod4 <- lm(Average.HHA.Charge.Amount~Average.Number.of.Skilled.Nursing.Visits, hhap_14)
+Table_4 <- hhap_15 %>% add_predictions(mod4, var="Pred_nvisits") %>%  add_residuals(mod4, "resid_nvisits") %>% select(Pred_nvisits, Average.HHA.Charge.Amount, resid_nvisits)
+mae_nvisits <- mean(abs(Table_4$resid_nvisits))
+mae_total[4] <-mae_nvisits
+
+mod5 <- lm(Average.HHA.Charge.Amount~Average.Number.of.PT.Visits, hhap_14)
+Table_4 <- hhap_15 %>% add_predictions(mod5, var="Pred_ptvisits") %>%  add_residuals(mod5, "resid_ptvisits") %>% select(Pred_ptvisits, Average.HHA.Charge.Amount, resid_ptvisits)
+mae_ptvisits <- mean(abs(Table_4$resid_ptvisits))
+mae_total[5] <-mae_ptvisits
+
+mod6 <- lm(Average.HHA.Charge.Amount~Average.Number.of.OT.Visits, hhap_14)
+Table_6 <- hhap_15 %>% add_predictions(mod6, var="Pred_otvisits") %>%  add_residuals(mod6, "resid_otvisits") %>% select(Pred_otvisits, Average.HHA.Charge.Amount, resid_otvisits)
+mae_otvisits <- mean(abs(Table_6$resid_otvisits))
+mae_total[6] <-mae_otvisits
+
+mod7 <- lm(Average.HHA.Charge.Amount~Average.Number.of.ST.Visits, hhap_14)
+Table_7 <- hhap_15 %>% add_predictions(mod7, var="Pred_ST") %>%  add_residuals(mod7, "resid_ST") %>% select(Pred_ST, Average.HHA.Charge.Amount, resid_ST)
+mae_ST <- mean(abs(Table_7$resid_ST))
+mae_total[7] <-mae_ST
+
+mod8 <- lm(Average.HHA.Charge.Amount~Average.Number.of.HH.Aide.Visits, hhap_14)
+Table_8 <- hhap_15 %>% add_predictions(mod8, var="Pred_Aide") %>%  add_residuals(mod8, "resid_Aide") %>% select(Pred_Aide, Average.HHA.Charge.Amount, resid_Aide)
+mae_Aide <- mean(abs(Table_8$resid_Aide))
+mae_total[8] <-mae_otvisits
+
+mod9 <- lm(Average.HHA.Charge.Amount~Average.Number.of.Medical.Social.Visits, hhap_14)
+Table_9 <- hhap_15 %>% add_predictions(mod9, var="Pred_med_soc") %>%  add_residuals(mod9, "resid_med_soc") %>% select(Pred_med_soc, Average.HHA.Charge.Amount, resid_med_soc)
+mae_med_soc <- mean(abs(Table_9$resid_med_soc))
+mae_total[9] <-mae_med_soc
+
+mod10 <- lm(Average.HHA.Charge.Amount~Average.HHA.Medicare.Payment.Amount, hhap_14)
+Table_10 <- hhap_15 %>% add_predictions(mod10, var="Pred_pay") %>%  add_residuals(mod10, "resid_pay") %>% select(Pred_pay, Average.HHA.Charge.Amount, resid_pay)
+mae_pay <- mean(abs(Table_10$resid_pay))
+
+# as we can see previous year data is not a good predictor of next year data.
+
+hhap_15
+Table_1
+mae_total
+```
+
+
+```{r, eval = F}
+#now we try creating a square root model doing it the old fashioned way with optim
+sq_rt <- function(vec, DATA){
+  # x is the vector, a is size, h is horizontal translation, k is vertical translation
+  y = vec[1]*(sqrt(DATA$Average.Number.of.Total.Visits.Per.Episode-vec[2])) + vec[3]
+  return(y)
+}
+# the graph just to remember what were modeling 
+ggplot(hhap_14) + geom_point(aes(x = Average.Number.of.Total.Visits.Per.Episode, y = Average.HHA.Charge.Amount ))
+ggplot(hhap_15) + geom_point(aes(x = Average.Number.of.Total.Visits.Per.Episode, y = Average.HHA.Charge.Amount ))
+```
+
+
+```{r, eval = F}
+guess = c(300, 0, 1000)
+trial1 <- sq_rt(guess, hhap_14)
+comparison <- hhap_14 %>% mutate(try_1 = trial1) %>% select(try_1, Average.HHA.Charge.Amount, everything())
+comparison
+
+ggplot(comparison) + geom_point(aes(x = Average.Number.of.Total.Visits.Per.Episode, y = Average.HHA.Charge.Amount )) + geom_line(aes(x = Average.Number.of.Total.Visits.Per.Episode, y = try_1, color="red"))
+```
+
+
+```{r, eval = F}
+mae.sqrt <- function(vec, DATA){
+  mae = mean(abs(hhap_15$Average.HHA.Charge.Amount-sq_rt(vec, DATA)))
+  return(mae)
+} # making a function to find the mae and therefore use the optim function
+vec= c(399, 0, 1060)
+mae.sqrt(vec, hhap_14)
+```
+
+
+```{r, eval = F}
+#now optimization
+
+optim(par = vec, fn = mae.sqrt, DATA=hhap_14)
+```
+
+
+```{r, eval = F}
+optim_vec = c(14.33964,  -20.41101, 2630.17985)
+mae_total[10] = mae.sqrt(optim_vec, hhap_14) # this was the lowest I could get the MAE
+mae_total
+```
+
+
+```{r, eval = F}
+# using a trigonometric model
+trig_mod <- function(vec, data){
+  y = vec[1]*sin(vec[2]*(data$Average.Number.of.Total.Visits.Per.Episode)-vec[3])+vec[4]
+  return(y)
+}
+v = c(1, 2, 3, 4)
+col <- trig_mod(v, hhap_14)
+together <- hhap_14 %>% mutate(col = col)
+ggplot(together) + geom_point(aes(x = Average.Number.of.Total.Visits.Per.Episode, y = Average.HHA.Charge.Amount, alpha = .05)) + geom_line(aes(x = Average.Number.of.Total.Visits.Per.Episode, y = col, color = "red"))
+```
+
+
+```{r, eval = F}
+# a function to calculate the error and optimization
+mae_trigmod <- function(vec, data){
+  values = hhap_14$Average.HHA.Charge.Amount - trig_mod(vec, data)
+  return (mean(abs(values)))
   
+}
+mae_trigmod(v, hhap_14)
+
+new_guesses_trig_mod <- optim(par = c(1, 2, 3, 4), fn = mae_trigmod, data = hhap_14)
+```
+
+
+```{r, eval = F}
+new_guess_values <- new_guesses_trig_mod$par
+#mae under hhap_14
+mae_trigmod(new_guess_values, hhap_14)
+# mae under hhap_15 using model from last year,
+mae_total[11] = mae_trigmod(new_guess_values, hhap_15) # they seem about the same
+```
+
+
+```{r, eval = F}
+#Trying a polynomial model
+poly_mod_totaleps <- lm(Average.HHA.Charge.Amount~ +Average.Number.of.Total.Visits.Per.Episode +  I(Average.Number.of.Total.Visits.Per.Episode^2) + I(Average.Number.of.ST.Visits^3), data = hhap_14)
+# seeing prediction on hhap_14
+good_hhap_14 <- hhap_14 %>% add_predictions(poly_mod_totaleps, var = "pred")
+
+better_hhap_14 <- good_hhap_14 %>% add_residuals(poly_mod_totaleps, var = "resid") %>%select(Average.HHA.Charge.Amount, pred, resid,everything())
+
+mae.better_14 <- mean(abs(better_hhap_14$resid))
+mae.better_14
+
+# mae with hhap_15
+good_hhap_15 <- hhap_15 %>% add_predictions(poly_mod_totaleps, var = "pred")
+better_hhap_15 <- good_hhap_15 %>% add_residuals(poly_mod_totaleps, var = "resid") %>%select(Average.HHA.Charge.Amount, pred, resid,everything())
+
+mae.better_15 <- mean(abs(better_hhap_15$resid))
+mae_total[12] = mae.better_15 # much better 
+better_hhap_14 %>% ggplot(aes(x = Average.Number.of.Total.Visits.Per.Episode)) + geom_point(aes(y = Average.HHA.Charge.Amount)) + geom_line(aes(y = pred, color = "red"))
+length(mae_total)
+```
+
+
+```{r, eval = F}
+#Trying a polynomial model w/ different variables
+poly_mod_totaleps <- lm(Average.HHA.Charge.Amount~ +Average.Number.of.Total.Visits.Per.Episode +  I(Average.Number.of.Skilled.Nursing.Visits^2) + I(Average.Number.of.ST.Visits^3), data = hhap_14)
+# seeing prediction on hhap_14
+good_hhap_14_3 <- hhap_14 %>% add_predictions(poly_mod_totaleps, var = "pred")
+
+better_hhap_14_3 <- good_hhap_14_3 %>% add_residuals(poly_mod_totaleps, var = "resid") %>%select(Average.HHA.Charge.Amount, pred, resid,everything())
+
+mae.better_14_3 <- mean(abs(better_hhap_14_3$resid))
+mae.better_14_3
+
+# mae with hhap_15
+good_hhap_15_3 <- hhap_15 %>% add_predictions(poly_mod_totaleps, var = "pred")
+better_hhap_15_3 <- good_hhap_15_3 %>% add_residuals(poly_mod_totaleps, var = "resid") %>%select(Average.HHA.Charge.Amount, pred, resid,everything())
+
+mae.better_15_3 <- mean(abs(better_hhap_15_3$resid))
+mae_total[13] = mae.better_15_3 # much better 
+better_hhap_14_3 %>% ggplot(aes(x = Average.Number.of.Total.Visits.Per.Episode)) + geom_point(aes(y = Average.HHA.Charge.Amount)) + geom_line(aes(y = pred, color = "red"))
+```
+
+
+```{r, eval = F}
+# trying another model using creation of the description variable
+
+hhap_14_des <- hhap_14 %>%
+  separate(col = HHRG.Description, into = c("HHRG.Description", "Therapies", "Clinical_Severity_Level", "Functional_Severity_Level", "Service_Severity_Level"),
+           sep = ",", remove = FALSE, extra = "drop") 
+hhap_14_des$Clinical_Severity_Level <- as.numeric(gsub("\\D", "", hhap_14_des$Clinical_Severity_Level))
+hhap_14_des$Functional_Severity_Level <- as.numeric(gsub("\\D", "", hhap_14_des$Functional_Severity_Level))
+hhap_14_des$Service_Severity_Level <- as.numeric(gsub("\\D", "", hhap_14_des$Service_Severity_Level)) 
+  
+
+#hhap_14_des <- hhap_14_des %>% select("HHRG", "Therapies", "HHRG.Description", "Clinical_Severity_Level", "Functional_Severity_Level", "Service_Severity_Level", "Distinct.Beneficiaries", "Total.HHA.Medicare.Payment.Amount", "Average.HHA.Medicare.Payment.Amount")
+hhap_14_des
+
+
+# for 15
+hhap_15_des <- hhap_15 %>%
+  separate(col = HHRG.Description, into = c("HHRG.Description", "Therapies", "Clinical_Severity_Level", "Functional_Severity_Level", "Service_Severity_Level"),
+           sep = ",", remove = FALSE, extra = "drop") 
+hhap_15_des$Clinical_Severity_Level <- as.numeric(gsub("\\D", "", hhap_15_des$Clinical_Severity_Level))
+hhap_15_des$Functional_Severity_Level <- as.numeric(gsub("\\D", "", hhap_15_des$Functional_Severity_Level))
+hhap_15_des$Service_Severity_Level <- as.numeric(gsub("\\D", "", hhap_15_des$Service_Severity_Level)) 
+hhap_15_des
+```
+
+
+```{r, eval = F}
+mae_values_therapies_14 = c()
+lm_model_therapies_14 <- lm(Average.HHA.Charge.Amount ~Therapies, data = hhap_14_des) # fit model
+  prediction_therapies_14 <- predict(lm_model_therapies_14, newdata = hhap_15_des) # predict using model
+  mae_therapies_14 <- mean(abs(hhap_15$Average.HHA.Medicare.Payment.Amount - prediction_therapies_14)) # find RMSE
+  #rmse_values_therapies_14 <- c(rmse_values_therapies_14, rmse_therapies_14)
+  #rmse_values_therapies_14
+  #hhap_14$RMSE_Therapies[i] <- rmse_therapies
+  mae_therapies_14
+```
+
+
+```{r, eval = F}
+# trying therapy variable with all 3 types of severity variables.
+hhap_14_des
+
+lm_model_therapies_3var <- lm(Average.HHA.Charge.Amount ~Therapies + I(Clinical_Severity_Level)+I(Functional_Severity_Level)+I(Service_Severity_Level), data = hhap_14_des)
+
+hhap_14_3var <- hhap_14_des %>% add_residuals(lm_model_therapies_3var, var = "resid") %>% select("resid")
+
+mae.3var <- mean(abs(hhap_14_3var$resid))
+rmse.3var <- sqrt(mean((hhap_14_3var$resid)^2))
+mae.3var
+rmse.3var
+```
+
+
+```{r, eval = F}
+#trying 14 model on 15
+new_part <- predict(lm_model_therapies_3var, hhap_15_des)
+hhap_15_3var<-hhap_15_des %>% mutate(col = new_part) %>% mutate(resid = new_part - Average.HHA.Charge.Amount)
+mae.3var_15 <- mean(abs(hhap_15_3var$resid))
+mae_total[14] = mae.3var_15
+mae_total
+mae.3var_15
+```
+
+
+```{r, eval = F}
+#Trying a polynomial(linear) model w/ different variables(best one yet)
+poly_mod_totaleps <- lm(Average.HHA.Charge.Amount~ +Average.Number.of.Total.Visits.Per.Episode +  I(Average.Number.of.Skilled.Nursing.Visits) + I(Average.Number.of.ST.Visits), data = hhap_14)
+# seeing prediction on hhap_14
+good_hhap_14_5 <- hhap_14 %>% add_predictions(poly_mod_totaleps, var = "pred")
+
+better_hhap_14_5 <- good_hhap_14_5 %>% add_residuals(poly_mod_totaleps, var = "resid") %>%select(Average.HHA.Charge.Amount, pred, resid,everything())
+
+mae.better_14_5 <- mean(abs(better_hhap_14_5$resid))
+mae.better_14_5
+
+# mae with hhap_15
+good_hhap_15_5 <- hhap_15 %>% add_predictions(poly_mod_totaleps, var = "pred")
+better_hhap_15_5 <- good_hhap_15_5 %>% add_residuals(poly_mod_totaleps, var = "resid") %>%select(Average.HHA.Charge.Amount, pred, resid,everything())
+
+mae.better_15_5 <- mean(abs(better_hhap_15_5$resid))
+mae_total[15] = mae.better_15_5 # much better 
+better_hhap_14_5 %>% ggplot(aes(x = Average.Number.of.Total.Visits.Per.Episode)) + geom_point(aes(y = Average.HHA.Charge.Amount)) + geom_line(aes(y = pred, color = "red"))
+
+mae_total
+mae_models = c("Linear model(predict HHA charge from Total Episodes )", 
+               "Linear model(predict HHA charge from Distinct Beneficiaries )", 
+               "Linear model(predict HHA charge from Average Number of Total Visits per Episode )", 
+               "Linear model(predicting HHA charge from Average Number of skilled Nursing visits )", 
+               "Linear model(predicting HHA charge from Average Number of PT Visit )", 
+               "Linear model(predicting HHA charge from Average Number of OT visits )", 
+               "Linear model(predicting HHA charge from Average Number of ST visits )", 
+               "Linear model(predicting HHA charge from Average Number of HH Aide visits )",  
+               "Linear model(predicting HHA charge from Average Number of medical social visits )", 
+               "square root model(Predicting HHA charge from Total visits per episodes)",
+               "trigonometric sine model(Predicting HHA charge from Total Episodes)",
+               "Cubic model(Predicting HHA charge usin Total visits per episode, ST Visits)", 
+               "Cubic model2(Predicting HHA charge using Total visits per episode, Total Number of skilled nursing visits, ST Visits)", 
+               "Linear model(Predicting HHA charge from Therapy variable that was created)",
+               "Linear model(Predicting HHA charge from Therapy variable that was created, and using severity levels)")
+hhap_15
+length(mae_models)
+```
+
+
+```{r, eval = F}
+mae_data <- tibble(
+  Description = c("Linear model(predict HHA charge from Total Episodes )", 
+               "Linear model(predict HHA charge from Distinct Beneficiaries )", 
+               "Linear model(predict HHA charge from Average Number of Total Visits per Episode )", 
+               "Linear model(predicting HHA charge from Average Number of skilled Nursing visits )", 
+               "Linear model(predicting HHA charge from Average Number of PT Visit )", 
+               "Linear model(predicting HHA charge from Average Number of OT visits )", 
+               "Linear model(predicting HHA charge from Average Number of ST visits )", 
+               "Linear model(predicting HHA charge from Average Number of HH Aide visits )",  
+               "Linear model(predicting HHA charge from Average Number of medical social visits )", 
+               "square root model(Predicting HHA charge from Total visits per episodes)",
+               "trigonometric sine model(Predicting HHA charge from Total Episodes)",
+               "Cubic model(Predicting HHA charge usin Total visits per episode, ST Visits)", 
+               "Cubic model2(Predicting HHA charge using Total visits per episode, Total Number of skilled nursing visits, ST Visits)", 
+               "Linear model(Predicting HHA charge from Therapy variable that was created)",
+               "Linear model(Predicting HHA charge from Therapy variable that was created, and using severity levels)"),
+  MAE = round(c(
+    mae_total[1], mae_total[2], mae_total[3], mae_total[4], mae_total[5], mae_total[6], mae_total[7], mae_total[8], mae_total[9], mae_total[10], mae_total[11], mae_total[12], mae_total[13], mae_total[14], mae_total[15]), 2))
+
+mae_data <- arrange(mae_data, desc(MAE))
+mae_data$MAE <- paste0("$", mae_data$MAE)
+mae_kable_table <- kable(mae_data, format = "html", caption = "MAE Values For Models", linesep = "<br>", table.attr = 'style="border-collapse: collapse; width: 100%;"',
+  row.attr = 'style="border-bottom: 2px solid black;"')
+cat(mae_kable_table, file = "mae_table.html")
+mae_kable_table
 ```
 
